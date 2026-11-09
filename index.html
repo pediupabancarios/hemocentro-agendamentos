@@ -896,6 +896,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
 </div>
 
+<!-- MODAL: ENVIAR AGENDA -->
+<div class="modal-bg" id="modal-envio">
+  <div class="modal">
+    <h2>💬 Enviar as datas ao paciente?</h2><p class="msub" id="envio-sub">—</p>
+    <div id="envio-prev" style="white-space:pre-wrap;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 14px;font-size:.78rem;line-height:1.5;max-height:46vh;overflow-y:auto"></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-envio')">Agora não</button><button class="btn-confirm" id="envio-btn" style="background:#128C7E">💬 Enviar pelo WhatsApp</button></div>
+  </div>
+</div>
+
 <!-- MODAL: DELETE -->
 <div class="modal-bg" id="modal-del">
   <div class="modal">
@@ -1978,6 +1987,7 @@ async function saveSerie(data){
   refreshViews();
   if(fail.length)alert(`${ok.length} agendamento(s) criado(s).\n\nNão criados:\n${fail.join('\n')}`);
   else showToast(`✅ Série criada: ${ok.length} agendamentos (${ok[0].proto} a ${ok[ok.length-1].proto})`,'ok');
+  if(ok.length)offerAgenda(ok[0].id);
 }
 // Celular em dígitos, sem 0 inicial nem o 55 do país (DDD 55 com 11 dígitos é preservado).
 function normPhone(phone){
@@ -2439,6 +2449,7 @@ function renderHistorico(){
         </div>
         <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
           ${whatsLink}${smsLink}
+          ${agendaFutura(rawP).length?`<button class="whatsapp-btn" style="background:#128C7E" onclick="sendAgendaWhatsApp('${p.id}')">📅 Enviar agenda</button>`:''}
           ${ed&&pac?`<button class="whatsapp-btn" style="background:#0f766e" onclick="openPacModal('${pac.id}')">🪪 Cadastro</button>`:''}
           ${ed?`<button class="whatsapp-btn" style="background:#f1f5f9;color:#374151" onclick="openAddPatient('${p.id}')">📅 Agendar</button>`:''}
         </div>
@@ -2478,6 +2489,51 @@ Dúvidas: entre em contato conosco.
 ✅ Responda SIM para confirmar ou NÃO para cancelar.`);
   window.open(`https://wa.me/55${normPhone(p.phone)}?text=${msg}`,'_blank','noopener');
   showToast('💬 Abrindo WhatsApp...','ok');
+}
+// Agendamentos de hoje em diante do mesmo paciente (Confirmado ou Pendente), em ordem.
+function agendaFutura(ref){
+  const r={pacienteId:ref.pacienteId,name:ref.name,dob:ref.dob};
+  return patients.filter(x=>samePatient(x,r)&&['Confirmado','Pendente'].includes(x.status)&&effDate(x)>=hoje()).sort(byDateTime);
+}
+function agendaMsg(lista){
+  const p=lista[0];
+  const linhas=lista.map(a=>`• ${dmy(a.apptDate).slice(0,5)} (${DIAS_CURTOS[new Date(effDate(a)+'T12:00').getDay()].toLowerCase()}) — ${a.service}, ${turnoTxt(a)}`);
+  return`Olá ${p.name}! 😊
+
+🩸 *Hemocentro de João Pessoa*
+${lista.length>1?'Seus agendamentos':'Seu agendamento'}:
+
+${linhas.join('\n')}
+
+Por favor, chegue com 15 minutos de antecedência.
+Dúvidas: entre em contato conosco.
+
+✅ Responda SIM para confirmar ou NÃO se precisar remarcar.`;
+}
+// Telefone do cadastro (mais atual) ou o do agendamento.
+function phoneOf(a){return pacById(a.pacienteId)?.phone||a.phone||'';}
+function sendAgendaWhatsApp(id){
+  const a=patients.find(x=>x.id===id);
+  if(!a){showToast('Paciente não encontrado','err');return;}
+  const lista=agendaFutura(a);
+  if(!lista.length){showToast('⚠️ Este paciente não tem agendamentos futuros','warn');return;}
+  const tel=normPhone(phoneOf(a));
+  if(![10,11].includes(tel.length)){showToast('⚠️ Cadastre um celular válido para o paciente','warn');return;}
+  const w=window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(agendaMsg(lista))}`,'_blank','noopener');
+  showToast(`💬 Abrindo WhatsApp com ${lista.length} agendamento(s)...`,'ok');
+  return w;
+}
+// Depois de criar uma série: janela com o botão de envio (o clique evita o bloqueio de pop-up).
+function offerAgenda(id){
+  const a=patients.find(x=>x.id===id);
+  if(!a)return;
+  const lista=agendaFutura(a);
+  const tel=normPhone(phoneOf(a));
+  if(!lista.length||![10,11].includes(tel.length))return;
+  G('envio-sub').textContent=`${a.name} · ${lista.length} agendamento(s) de hoje em diante`;
+  G('envio-prev').textContent=agendaMsg(lista);
+  G('envio-btn').onclick=()=>{sendAgendaWhatsApp(id);closeModal('modal-envio');};
+  G('modal-envio').classList.add('open');
 }
 function sendSMSById(id){
   const p=contactablePatient(id);
