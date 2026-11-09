@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>Hemocentro JP</title>
+
+<!-- ══ PWA — Instalar como App ══ -->
+<meta name="application-name" content="Hemocentro JP"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Hemocentro JP"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#1e40af"/>
+<meta name="description" content="Sistema de Agendamentos do Hemocentro de João Pessoa"/>
+<meta name="msapplication-TileColor" content="#1e40af"/>
+
+<!-- PWA: arquivos reais (blob: não funciona para service worker nem manifest) -->
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png"/>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --T:#2563eb;--M:#059669;--S:#7c3aed;--P:#d97706;
+  --fem:#db2777;--masc:#1d4ed8;
+  --bg:#f0f4f8;--white:#fff;--border:#e2e8f0;
+  --text:#0f172a;--muted:#64748b;--light:#94a3b8;
+  --sw:248px;--th:62px;
+  --danger:#dc2626;--warn:#d97706;--ok:#059669;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+@keyframes pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.fu{animation:fadeUp .45s cubic-bezier(.22,1,.36,1) both}
+.fu1{animation:fadeUp .45s .06s cubic-bezier(.22,1,.36,1) both}
+.fu2{animation:fadeUp .45s .12s cubic-bezier(.22,1,.36,1) both}
+.fu3{animation:fadeUp .45s .18s cubic-bezier(.22,1,.36,1) both}
+
+/* ── LOGIN ── */
+#login-screen{display:none;min-height:100vh;min-height:100dvh;background:linear-gradient(135deg,#0c1f5c 0%,#1e40af 45%,#6d28d9 100%);align-items:center;justify-content:center;padding:16px;overflow-y:auto;position:relative;}
+#login-screen::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+#login-screen.active{display:flex;}
+.lcrd{display:flex;flex-direction:column;background:#fff;border-radius:24px;overflow:hidden;max-width:840px;width:100%;box-shadow:0 40px 120px rgba(0,0,0,.4);animation:fadeUp .55s cubic-bezier(.22,1,.36,1);margin:auto;position:relative;}
+@media(min-width:640px){.lcrd{flex-direction:row;}}
+.ll{background:linear-gradient(155deg,#1e40af,#7c3aed);padding:32px 28px;display:flex;flex-direction:column;justify-content:center;color:#fff;position:relative;overflow:hidden;}
+.ll::after{content:'🩸';position:absolute;right:-20px;bottom:-20px;font-size:120px;opacity:.07;}
+@media(min-width:640px){.ll{flex:1;padding:52px 44px;}}
+.llogo{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.lico{width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);}
+.llogo h2{font-size:1.1rem;font-weight:800;letter-spacing:-.01em;}
+.llogo p{font-size:.7rem;opacity:.7;margin-top:1px;}
+.ll h1{font-size:1.7rem;font-weight:900;line-height:1.15;margin-bottom:12px;letter-spacing:-.02em;}
+@media(min-width:640px){.ll h1{font-size:2.1rem;}}
+.ll>p{font-size:.85rem;opacity:.8;line-height:1.7;}
+.ldots{display:flex;gap:8px;margin-top:24px;}
+.ldot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);}
+.ldot.on{background:#fff;width:28px;border-radius:4px;}
+.lr{padding:28px 24px;display:flex;flex-direction:column;justify-content:center;}
+@media(min-width:640px){.lr{flex:1;padding:52px 44px;}}
+.lr h3{font-size:1.3rem;font-weight:900;margin-bottom:4px;letter-spacing:-.02em;}
+.lr .sub{font-size:.78rem;color:var(--light);margin-bottom:24px;}
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:.7rem;font-weight:700;color:#475569;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:.88rem;outline:none;transition:border .2s,box-shadow .2s,background .2s;background:#f8fafc;color:var(--text);}
+.fg input:focus,.fg select:focus{border-color:var(--T);box-shadow:0 0 0 3px rgba(37,99,235,.12);background:#fff;}
+.lerr{background:#fef2f2;border:1.5px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 14px;font-size:.8rem;font-weight:600;margin-bottom:14px;display:none;}
+.lerr.show{display:block;}
+.btnpr{width:100%;padding:14px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:.93rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(37,99,235,.35);transition:transform .15s,box-shadow .15s,opacity .15s;letter-spacing:.01em;}
+.btnpr:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(37,99,235,.4);}
+.btnpr:active{transform:translateY(0);}
+
+/* ── APP ── */
+#app-screen{display:none;}
+#app-screen.active{display:block;}
+
+/* SIDEBAR */
+.sb{position:fixed;top:0;left:0;bottom:0;width:var(--sw);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:200;box-shadow:var(--shadow);animation:slideIn .4s cubic-bezier(.22,1,.36,1);}
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;}
+.sb-ico{width:40px;height:40px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.3);}
+.sb-txt h2{font-size:.92rem;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+.sb-txt p{font-size:.63rem;color:var(--light);margin-top:1px;}
+.sb-user{padding:10px 12px 12px;border-bottom:1px solid var(--border);margin:0 6px;background:#f8fafc;border-radius:10px;margin:8px 8px 0;display:flex;align-items:center;gap:9px;}
+.sb-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#fff;flex-shrink:0;}
+.sb-uname{font-size:.79rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-urole{font-size:.62rem;color:var(--light);}
+.sb-nav{flex:1;overflow-y:auto;padding:10px 8px;}
+.sb-nav::-webkit-scrollbar{width:3px;}
+.sb-nav::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
+.ni{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;border-radius:10px;cursor:pointer;font-size:.8rem;font-weight:500;color:#475569;transition:background .15s,color .15s,transform .1s;margin-bottom:2px;user-select:none;}
+.ni:hover{background:#f1f5f9;transform:translateX(2px);}
+.ni.active{background:linear-gradient(135deg,rgba(37,99,235,.1),rgba(124,58,237,.08));color:var(--T);font-weight:700;}
+.ni .nil{display:flex;align-items:center;gap:9px;}
+.ni .ico{font-size:.95rem;width:18px;text-align:center;}
+.ni .chv{font-size:.6rem;opacity:.4;transition:transform .2s;}.ni.open .chv{transform:rotate(90deg);}
+.nc{padding-left:28px;overflow:hidden;max-height:0;transition:max-height .25s;}.nc.open{max-height:400px;}
+.nch{padding:7px 11px;border-radius:8px;cursor:pointer;font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:7px;transition:background .15s,color .15s;margin-bottom:1px;}
+.nch:hover{background:#f8fafc;color:var(--text);}
+.nch.active{background:rgba(37,99,235,.08);color:var(--T);font-weight:700;}
+.sb-foot{padding:8px 8px 14px;border-top:1px solid var(--border);}
+.btnout{width:100%;display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:10px;cursor:pointer;font-size:.79rem;font-weight:600;color:var(--danger);background:none;border:none;font-family:inherit;transition:background .15s;}
+.btnout:hover{background:#fef2f2;}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:var(--sw);right:0;height:var(--th);background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:150;box-shadow:0 1px 0 var(--border);}
+.tb-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:7px;border-radius:9px;font-size:1.2rem;color:var(--text);}
+.hamburger:hover{background:#f1f5f9;}
+.tb-title h1{font-size:1.1rem;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em;}
+.tb-title p{font-size:.66rem;color:var(--light);margin-top:1px;}
+.tb-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.nbb{position:relative;background:#f1f5f9;border:none;cursor:pointer;font-size:1.05rem;padding:8px;border-radius:10px;transition:background .15s;}
+.nbb:hover{background:#e2e8f0;}
+.nbadge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;border-radius:10px;font-size:.52rem;padding:2px 5px;font-weight:800;border:2px solid var(--white);animation:pulse 2s infinite;}
+.upill{display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 12px 5px 5px;border-radius:40px;border:1.5px solid var(--border);background:#fff;transition:border-color .15s,box-shadow .15s;}
+.upill:hover{border-color:var(--T);box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;color:#fff;}
+.ui p{font-size:.77rem;font-weight:700;color:var(--text);}
+.ui span{font-size:.62rem;color:var(--light);}
+
+/* MAIN */
+.main{margin-left:var(--sw);margin-top:var(--th);padding:22px 26px 52px;}
+.page{display:none;animation:fadeUp .35s cubic-bezier(.22,1,.36,1);}.page.active{display:block;}
+
+/* PAGE HEADER */
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.page-hdr h2{font-size:1.15rem;font-weight:900;letter-spacing:-.02em;}
+.page-hdr p{font-size:.74rem;color:var(--light);margin-top:3px;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+.scard{background:var(--white);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform .2s,box-shadow .2s;cursor:default;position:relative;overflow:hidden;}
+.scard::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;}
+.scard.ct::after{background:linear-gradient(90deg,#2563eb,#60a5fa);}
+.scard.cp::after{background:linear-gradient(90deg,#d97706,#fbbf24);}
+.scard.cm::after{background:linear-gradient(90deg,#059669,#34d399);}
+.scard.cs::after{background:linear-gradient(90deg,#7c3aed,#a78bfa);}
+.scard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+.sico{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.45rem;flex-shrink:0;}
+.sico.ct{background:linear-gradient(135deg,#dbeafe,#eff6ff);}
+.sico.cm{background:linear-gradient(135deg,#d1fae5,#ecfdf5);}
+.sico.cs{background:linear-gradient(135deg,#ede9fe,#f5f3ff);}
+.sico.cp{background:linear-gradient(135deg,#fef3c7,#fffbeb);}
+.snum{font-size:1.8rem;font-weight:900;color:var(--text);line-height:1;letter-spacing:-.02em;}
+.slbl2{font-size:.79rem;font-weight:700;color:#334155;margin-top:2px;}
+.ssub{font-size:.62rem;color:var(--light);margin-top:2px;}
+
+/* GRID */
+.dash-grid{display:flex;gap:18px;}
+.col-main{flex:2.2;min-width:0;}.col-side{flex:1;min-width:244px;}
+
+/* PANEL */
+.panel{background:var(--white);border-radius:16px;padding:20px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:16px;}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.pt{font-size:.94rem;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+.pd{font-size:.67rem;color:var(--light);margin-top:2px;}
+.plink{font-size:.73rem;font-weight:700;color:var(--T);cursor:pointer;background:rgba(37,99,235,.07);padding:4px 10px;border-radius:8px;transition:background .15s;}
+.plink:hover{background:rgba(37,99,235,.14);}
+.slbl3{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 0;margin:12px 0 7px;border-bottom:2px solid currentColor;display:inline-block;}
+
+/* PERIOD BLOCK */
+.pblock{border-radius:11px;overflow:hidden;border:1px solid var(--border);margin-bottom:10px;}
+.phdr2{display:flex;align-items:center;gap:7px;padding:7px 12px;font-size:.67rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;}
+.phdr2.ma{background:linear-gradient(90deg,#fef9ee,#fffbeb);color:#92400e;border-bottom:1px solid #fde68a;}
+.phdr2.ta{background:linear-gradient(90deg,#eff6ff,#f0f9ff);color:#1e40af;border-bottom:1px solid #bfdbfe;}
+.pbody{padding:4px 12px 4px;}
+.ghdr2{text-align:center;border-radius:8px;padding:5px 10px;font-size:.68rem;font-weight:800;margin:8px 0 6px;letter-spacing:.04em;}
+.ghdr2.f{background:linear-gradient(90deg,#fdf2f8,#fce7f3);color:var(--fem);}
+.ghdr2.m{background:linear-gradient(90deg,#eff6ff,#dbeafe);color:var(--masc);}
+
+/* APPT ROW */
+.ar{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;}
+.ar:last-child{border-bottom:none;}
+.at2{font-size:.72rem;font-weight:700;color:var(--muted);min-width:36px;}
+.ai{flex:1;min-width:0;}
+.an{font-size:.78rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ap{font-size:.62rem;color:var(--light);margin-top:1px;}
+.bk{font-size:.59rem;padding:3px 8px;border-radius:20px;background:#d1fae5;color:#065f46;font-weight:700;white-space:nowrap;flex-shrink:0;border:1px solid #a7f3d0;}
+.bv{font-size:.59rem;padding:3px 8px;border-radius:20px;background:#fef9c3;color:#854d0e;font-weight:700;white-space:nowrap;flex-shrink:0;border:1px solid #fde047;}
+.bc{font-size:.59rem;padding:3px 8px;border-radius:20px;background:#fee2e2;color:#991b1b;font-weight:700;white-space:nowrap;flex-shrink:0;border:1px solid #fca5a5;}
+.row-actions{display:flex;gap:3px;flex-shrink:0;}
+.rbtn{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:7px;font-size:.78rem;transition:background .15s;}
+.rbtn:hover{background:#f1f5f9;}.rbtn.del:hover{background:#fee2e2;}
+
+/* CALENDAR */
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.cal-month{font-size:.9rem;font-weight:800;letter-spacing:-.01em;}
+.cal-btns{display:flex;gap:4px;}
+.cb2{background:#f1f5f9;border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.cb2:hover{background:#e2e8f0;}.cb2.tod{width:auto;padding:0 10px;font-size:.68rem;font-weight:700;}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;}
+.cdn{font-size:.57rem;font-weight:800;color:var(--light);padding-bottom:6px;letter-spacing:.05em;}
+.cd{padding:3px 1px 2px;border-radius:7px;cursor:pointer;transition:background .15s,transform .1s;border:2px solid transparent;}
+.cd:hover{background:#f1f5f9;transform:scale(1.05);}
+.cd.tod2{background:linear-gradient(135deg,#2563eb,#7c3aed);}
+.cd.tod2 .cn{color:#fff;font-weight:900;}.cd.sel:not(.tod2){border-color:#818cf8;background:#eef2ff;}
+.cn{font-size:.71rem;font-weight:500;color:#334155;}
+.cdots{display:flex;justify-content:center;gap:2px;margin-top:2px;min-height:6px;}
+.cdot{width:4px;height:4px;border-radius:50%;}
+.cal-leg{display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.cli{display:flex;align-items:center;gap:4px;font-size:.59rem;color:var(--muted);}
+.cld{width:7px;height:7px;border-radius:50%;}
+
+/* SUMMARY */
+.sr{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.sr:last-child{border-bottom:none;}
+.sl{display:flex;align-items:center;gap:8px;font-size:.78rem;color:#334155;}
+.sv{font-size:.74rem;font-weight:700;}
+.stot{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:2px solid #f1f5f9;font-weight:800;font-size:.86rem;}
+.btnnew{width:100%;margin-top:13px;padding:13px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(37,99,235,.28);transition:transform .15s,box-shadow .15s;letter-spacing:.01em;}
+.btnnew:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(37,99,235,.38);}
+
+/* INFO BAR */
+.ibar{background:var(--white);border-radius:16px;padding:16px 20px;box-shadow:var(--shadow);border:1px solid var(--border);display:flex;}
+.ic{flex:1;text-align:center;padding:0 8px;border-right:1px solid var(--border);}
+.ic:last-child{border-right:none;}
+.ii{font-size:1.4rem;margin-bottom:4px;}
+.in{font-size:1.4rem;font-weight:900;letter-spacing:-.02em;}
+.il{font-size:.59rem;color:var(--light);margin-top:2px;line-height:1.3;}
+
+/* CAP BARS */
+.caprow{margin-bottom:9px;}
+.caplbl{display:flex;justify-content:space-between;font-size:.67rem;color:var(--muted);margin-bottom:4px;}
+.capbar{background:#f1f5f9;border-radius:6px;height:8px;overflow:hidden;}
+.capfill{height:100%;border-radius:6px;transition:width .7s cubic-bezier(.22,1,.36,1);}
+
+/* MGMT */
+.mgmt-grid{display:flex;gap:16px;flex-wrap:wrap;}
+.mgmt-col{flex:1;min-width:280px;}
+.cap-card{background:var(--white);border-radius:16px;box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;margin-bottom:14px;}
+.cap-card-hdr{display:flex;align-items:center;gap:11px;padding:14px 16px;border-bottom:1px solid var(--border);background:#fafafa;}
+.cap-card-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;}
+.cap-card-hdr h3{font-size:.88rem;font-weight:800;letter-spacing:-.01em;}
+.cap-card-hdr p{font-size:.65rem;color:var(--light);margin-top:1px;}
+.cap-rows{padding:8px 16px 14px;}
+.cap-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9;}
+.cap-row:last-child{border-bottom:none;}
+.cap-row-lbl{font-size:.79rem;font-weight:700;}
+.cap-row-sub{font-size:.63rem;color:var(--light);margin-top:1px;}
+.cap-ctrl{display:flex;align-items:center;gap:8px;}
+.cap-num{font-size:1.1rem;font-weight:900;min-width:24px;text-align:center;color:var(--T);}
+.ccbtn{width:30px;height:30px;border-radius:9px;border:1.5px solid var(--border);background:#f8fafc;cursor:pointer;font-size:1.1rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.ccbtn:hover{background:var(--T);border-color:var(--T);color:#fff;}
+.ccbtn.minus:hover{background:var(--danger);border-color:var(--danger);color:#fff;}
+.cap-save{margin-top:12px;width:100%;padding:10px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.81rem;font-weight:700;cursor:pointer;transition:opacity .15s;}
+.cap-save:hover{opacity:.9;}
+
+/* PATIENTS TABLE */
+.ptable-wrap{overflow-x:auto;}
+.ptable{width:100%;border-collapse:collapse;font-size:.77rem;}
+.ptable th{text-align:left;padding:10px 12px;font-size:.63rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap;background:#fafafa;}
+.ptable td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.ptable tbody tr:hover td{background:#f8fafc;}
+.td-name{font-weight:700;color:var(--text);}
+.td-proto{font-size:.64rem;color:var(--light);}
+.stag{display:inline-block;font-size:.59rem;font-weight:700;padding:3px 8px;border-radius:12px;white-space:nowrap;}
+.st-t{background:#dbeafe;color:#1e40af;}.st-p{background:#fef3c7;color:#92400e;}
+.st-m{background:#d1fae5;color:#065f46;}.st-s{background:#ede9fe;color:#5b21b6;}
+.search-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.search-bar input{flex:1;min-width:150px;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.82rem;outline:none;transition:border .2s;background:#f8fafc;}
+.search-bar input:focus{border-color:var(--T);background:#fff;}
+.search-bar select{padding:10px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.78rem;outline:none;background:#f8fafc;cursor:pointer;}
+.btn-add{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.79rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.25);transition:transform .15s;white-space:nowrap;}
+.btn-add:hover{transform:translateY(-1px);}
+.tbl-act{background:none;border:none;cursor:pointer;padding:5px 7px;border-radius:7px;font-size:.83rem;transition:background .15s;}
+.tbl-act:hover{background:#f1f5f9;}.tbl-act.del:hover{background:#fee2e2;}
+
+/* ══ RELATÓRIOS ══ */
+.rel-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:22px;}
+.rel-card{background:var(--white);border-radius:16px;padding:20px;border:1px solid var(--border);box-shadow:var(--shadow);cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;text-align:center;}
+.rel-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--T);}
+.rel-card-ico{font-size:2rem;margin-bottom:10px;}
+.rel-card-title{font-size:.87rem;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+.rel-card-sub{font-size:.69rem;color:var(--light);margin-top:4px;}
+.rel-section{background:var(--white);border-radius:16px;padding:20px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px;}
+.rel-section h3{font-size:.9rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;letter-spacing:-.01em;}
+.rel-table{width:100%;border-collapse:collapse;font-size:.79rem;}
+.rel-table th{text-align:left;padding:9px 12px;font-size:.63rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-bottom:2px solid var(--border);background:#fafafa;}
+.rel-table td{padding:9px 12px;border-bottom:1px solid #f1f5f9;}
+.rel-table tr:last-child td{border-bottom:none;}
+.rel-table tbody tr:hover td{background:#f8fafc;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
+.stat-box{background:#f8fafc;border-radius:12px;padding:14px 16px;border:1px solid var(--border);text-align:center;}
+.stat-box .val{font-size:1.6rem;font-weight:900;letter-spacing:-.02em;}
+.stat-box .lbl{font-size:.67rem;color:var(--muted);margin-top:4px;}
+.progress-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.progress-row:last-child{border-bottom:none;}
+.progress-lbl{font-size:.78rem;font-weight:600;min-width:120px;}
+.progress-bar-w{flex:1;background:#f1f5f9;border-radius:6px;height:9px;overflow:hidden;}
+.progress-bar-f{height:100%;border-radius:6px;transition:width .7s cubic-bezier(.22,1,.36,1);}
+.progress-val{font-size:.72rem;font-weight:700;min-width:40px;text-align:right;}
+.btn-rel{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-family:inherit;font-size:.79rem;font-weight:700;cursor:pointer;transition:all .15s;color:var(--text);}
+.btn-rel:hover{border-color:var(--T);color:var(--T);background:#eff6ff;}
+.btn-rel.primary{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(37,99,235,.25);}
+.btn-rel.primary:hover{opacity:.9;color:#fff;}
+.rel-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+
+/* USUARIOS */
+.user-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.user-card{background:var(--white);border-radius:14px;padding:18px;border:1px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;gap:13px;transition:box-shadow .2s;}
+.user-card:hover{box-shadow:var(--shadow-lg);}
+.user-card-av{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.15rem;color:#fff;flex-shrink:0;}
+.ucard-name{font-weight:700;font-size:.88rem;letter-spacing:-.01em;}
+.ucard-login{font-size:.7rem;color:var(--muted);margin-top:2px;}
+.ucard-pass{font-size:.7rem;color:var(--muted);margin-top:1px;}
+.rpill{display:inline-block;font-size:.59rem;font-weight:700;padding:3px 9px;border-radius:12px;margin-top:5px;}
+.rp-gestor{background:#fef3c7;color:#92400e;}.rp-recepcao{background:#dbeafe;color:#1e40af;}.rp-medico{background:#d1fae5;color:#065f46;}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.open{display:flex;animation:fadeIn .2s ease;}
+.modal{background:#fff;border-radius:20px;padding:26px;max-width:500px;width:100%;box-shadow:0 32px 96px rgba(0,0,0,.28);animation:pop .25s cubic-bezier(.22,1,.36,1);max-height:92vh;overflow-y:auto;}
+.modal h2{font-size:1rem;font-weight:900;margin-bottom:4px;letter-spacing:-.02em;}
+.msub{font-size:.73rem;color:var(--light);margin-bottom:18px;}
+.mfg{margin-bottom:12px;}
+.mfg label{display:block;font-size:.68rem;font-weight:700;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
+.mfg input,.mfg select{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.86rem;outline:none;transition:border .2s;background:#f8fafc;}
+.mfg input:focus,.mfg select:focus{border-color:var(--T);background:#fff;}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+.btn-cancel{padding:10px 18px;background:#f1f5f9;border:none;border-radius:10px;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .15s;}
+.btn-cancel:hover{background:#e2e8f0;}
+.btn-confirm{padding:10px 20px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;}
+.btn-del{padding:10px 20px;background:var(--danger);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:#0f172a;color:#fff;padding:11px 18px;border-radius:12px;font-size:.81rem;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.28);z-index:2000;opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s;pointer-events:none;max-width:290px;display:flex;align-items:center;gap:8px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{border-left:4px solid var(--ok);}.toast.err{border-left:4px solid var(--danger);}.toast.warn{border-left:4px solid var(--warn);}
+
+/* MOBILE */
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(2px);z-index:190;}
+.sb-overlay.open{display:block;}
+@media(max-width:767px){
+  :root{--sw:0px;--th:54px;}
+  .sb{transform:translateX(-248px);transition:transform .3s cubic-bezier(.22,1,.36,1);width:248px;}
+  .sb.open{transform:translateX(0);}
+  .topbar{left:0;padding:0 14px;}
+  .tb-title h1{font-size:.92rem;}
+  .tb-title p{display:none;}
+  .hamburger{display:flex;align-items:center;justify-content:center;}
+  .upill .ui{display:none;}
+  .main{margin-left:0;padding:12px 12px 60px;}
+  .stats-row{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .scard{padding:12px 14px;gap:10px;}
+  .sico{width:38px;height:38px;font-size:1.2rem;}
+  .snum{font-size:1.4rem;}.slbl2{font-size:.72rem;}.ssub{font-size:.59rem;}
+  .dash-grid{flex-direction:column;}.col-side{min-width:0;}
+  .ibar{padding:12px 8px;}
+  .ic{padding:0 5px;}.ii{font-size:1.05rem;}.in{font-size:1.05rem;}.il{font-size:.57rem;}
+  .mgmt-grid{flex-direction:column;}.mgmt-col{min-width:0;}
+  .mrow{grid-template-columns:1fr;}
+  .phdr2{font-size:.63rem;padding:6px 10px;}
+  .ar{gap:6px;}.at2{min-width:32px;}
+  .an{font-size:.73rem;}.ap{font-size:.59rem;}
+}
+@media(min-width:768px){
+  .hamburger{display:none!important;}
+  .sb-overlay{display:none!important;}
+  .sb{transform:none!important;transition:none!important;}
+}
+
+
+/* ══ BUSCA RÁPIDA GLOBAL ══ */
+.global-search-wrap{position:relative;margin:8px;}
+.global-search-input{width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.82rem;background:#f8fafc;outline:none;transition:border .2s,box-shadow .2s;}
+.global-search-input:focus{border-color:var(--T);box-shadow:0 0 0 3px rgba(37,99,235,.1);background:#fff;}
+.global-search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.9rem;pointer-events:none;}
+.search-results-drop{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border-radius:12px;box-shadow:var(--shadow-lg);border:1px solid var(--border);z-index:300;max-height:280px;overflow-y:auto;display:none;}
+.search-results-drop.open{display:block;animation:fadeUp .2s ease;}
+.sr-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background .15s;}
+.sr-item:last-child{border-bottom:none;}
+.sr-item:hover{background:#f8fafc;}
+.sr-item-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800;color:#fff;flex-shrink:0;}
+.sr-item-name{font-size:.82rem;font-weight:700;color:var(--text);}
+.sr-item-sub{font-size:.67rem;color:var(--light);margin-top:1px;}
+.sr-empty{padding:16px;text-align:center;font-size:.8rem;color:var(--light);}
+
+/* ══ HISTÓRICO DO PACIENTE ══ */
+.hist-header{display:flex;align-items:center;gap:14px;padding:18px;background:linear-gradient(135deg,#1e40af,#7c3aed);border-radius:14px;color:#fff;margin-bottom:16px;}
+.hist-av{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;flex-shrink:0;border:2px solid rgba(255,255,255,.3);}
+.hist-name{font-size:1.1rem;font-weight:900;letter-spacing:-.01em;}
+.hist-meta{font-size:.75rem;opacity:.85;margin-top:3px;}
+.hist-stats{display:flex;gap:12px;margin-top:8px;}
+.hist-stat{background:rgba(255,255,255,.15);border-radius:8px;padding:6px 12px;text-align:center;}
+.hist-stat .v{font-size:1.1rem;font-weight:900;}
+.hist-stat .l{font-size:.6rem;opacity:.8;margin-top:1px;}
+.hist-timeline{position:relative;padding-left:20px;}
+.hist-timeline::before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:linear-gradient(to bottom,var(--T),var(--S));border-radius:2px;}
+.hist-item{position:relative;background:#fff;border-radius:12px;padding:13px 15px;border:1px solid var(--border);margin-bottom:10px;box-shadow:var(--shadow);}
+.hist-item::before{content:'';position:absolute;left:-17px;top:18px;width:10px;height:10px;border-radius:50%;background:var(--T);border:2px solid #fff;box-shadow:0 0 0 2px var(--T);}
+.hist-item.pend::before{background:var(--warn);}
+.hist-item.canc::before{background:var(--danger);}
+.hist-item-date{font-size:.7rem;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+.hist-item-title{font-size:.88rem;font-weight:700;color:var(--text);margin-top:3px;}
+.hist-item-sub{font-size:.72rem;color:var(--light);margin-top:2px;}
+.hist-item-badge{margin-top:6px;}
+.whatsapp-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#25D366;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;transition:background .15s;margin-top:6px;}
+.whatsapp-btn:hover{background:#128C7E;}
+.sms-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;transition:background .15s;margin-top:6px;margin-left:6px;}
+.sms-btn:hover{background:#4f46e5;}
+
+/* ══ ALERTAS / NOTIFICAÇÕES ══ */
+.alerts-panel{background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;}
+.alerts-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border);background:#fafafa;}
+.alerts-hdr h3{font-size:.88rem;font-weight:800;display:flex;align-items:center;gap:8px;}
+.alert-item{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid #f1f5f9;transition:background .15s;}
+.alert-item:last-child{border-bottom:none;}
+.alert-item:hover{background:#fafafa;}
+.alert-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.alert-ico.warn{background:#fef9c3;}.alert-ico.danger{background:#fee2e2;}.alert-ico.ok{background:#d1fae5;}.alert-ico.info{background:#dbeafe;}
+.alert-title{font-size:.8rem;font-weight:700;color:var(--text);}
+.alert-sub{font-size:.68rem;color:var(--light);margin-top:2px;}
+.alert-time{font-size:.62rem;color:var(--light);white-space:nowrap;flex-shrink:0;}
+.notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);border:1px solid var(--border);z-index:500;display:none;animation:pop .2s ease;}
+.notif-panel.open{display:block;}
+.notif-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.notif-hdr h3{font-size:.88rem;font-weight:800;}
+.notif-clear{font-size:.72rem;color:var(--T);cursor:pointer;font-weight:600;}
+.notif-list{max-height:340px;overflow-y:auto;}
+.notif-item{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .15s;}
+.notif-item:hover{background:#f8fafc;}
+.notif-item.unread{background:#eff6ff;}
+.notif-ico2{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.notif-title2{font-size:.79rem;font-weight:700;color:var(--text);}
+.notif-sub2{font-size:.66rem;color:var(--light);margin-top:1px;}
+.notif-empty{padding:24px;text-align:center;font-size:.8rem;color:var(--light);}
+.tb-right{position:relative;}
+
+/* ══ PHONE FIELD IN MODAL ══ */
+.phone-row{display:flex;gap:8px;align-items:flex-end;}
+.phone-row .mfg{flex:1;}
+.phone-flag{padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;background:#f8fafc;font-size:.85rem;cursor:pointer;white-space:nowrap;}
+
+/* ══ FICHA PRINT ══ */
+.ficha-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:#f1f5f9;border:1px solid var(--border);border-radius:7px;font-size:.68rem;font-weight:700;cursor:pointer;color:var(--text);transition:background .15s;}
+.ficha-btn:hover{background:#e2e8f0;}
+
+/* PRINT STYLES */
+@media print{
+  .sb,.topbar,.no-print{display:none!important;}
+  .main{margin:0!important;padding:10px!important;}
+  .page:not(.active),.modal-bg,.toast,.sb-overlay{display:none!important;}
+  body{background:#fff;}
+  .panel,.rel-section{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid;}
+  .scard{box-shadow:none;break-inside:avoid;}
+}
+
+.l-link{width:100%;margin-top:12px;padding:8px;background:none;border:none;font-family:inherit;font-size:.76rem;font-weight:600;color:var(--T);cursor:pointer;}
+.btnpr:disabled{opacity:.6;cursor:wait;}
+#boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:.88rem;font-weight:600;color:var(--muted);z-index:50;}
+#conn-bar{display:none;position:fixed;left:var(--sw);right:0;top:calc(var(--th) + env(safe-area-inset-top));z-index:140;background:#fef3c7;color:#92400e;border-bottom:1px solid #fde68a;padding:7px 16px;font-size:.74rem;font-weight:700;text-align:center;}
+#conn-bar.show{display:block;}
+.code-box{background:#f1f5f9;border:1.5px dashed #94a3b8;border-radius:12px;padding:16px;text-align:center;font-family:ui-monospace,Menlo,monospace;font-size:1.15rem;font-weight:700;letter-spacing:.04em;word-break:break-all;user-select:all;}
+.code-note{font-size:.74rem;color:var(--muted);line-height:1.55;margin-top:12px;}
+/* ══ FILTRO DO DASHBOARD ══ */
+.filter-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;}
+.filter-banner button{background:#fff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+/* ══ PERÍODO DO RELATÓRIO ══ */
+.rel-filter{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+.rel-filter label{display:block;font-size:.65rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;}
+.rel-filter input{display:block;margin-top:4px;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.82rem;background:#f8fafc;}
+.rel-period{font-size:.72rem;font-weight:500;color:var(--muted);margin-left:auto;}
+.upill{user-select:none;}
+.backup-actions{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px;}
+.backup-note{font-size:.68rem;color:var(--muted);padding:0 16px 14px;line-height:1.5;}
+/* Área segura (iPhone com notch, app instalado) */
+.topbar{height:calc(var(--th) + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);}
+.main{margin-top:calc(var(--th) + env(safe-area-inset-top));}
+.sb{padding-top:env(safe-area-inset-top);}
+@media(max-width:767px){
+  .sb{animation:none;}
+  /* A topbar tem backdrop-filter, então o fixed é relativo a ela */
+  .notif-panel{position:fixed;top:calc(var(--th) + env(safe-area-inset-top) + 6px);left:12px;right:12px;width:auto;}
+  /* Abaixo de 16px o iPhone dá zoom ao focar no campo */
+  .fg input,.fg select,.mfg input,.mfg select,.search-bar input,.search-bar select,.global-search-input,.rel-filter input{font-size:16px;}
+  .ar{flex-wrap:wrap;}
+  .rel-period{margin-left:0;width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div id="boot">Carregando…</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="lcrd">
+    <div class="ll">
+      <div class="llogo"><div class="lico">🩸</div><div><h2>Hemocentro</h2><p>João Pessoa — PB</p></div></div>
+      <h1>Sistema de Agendamentos</h1>
+      <p>Gerencie transfusões, medicações, sangria terapêutica e pediátrica com eficiência e segurança.</p>
+      <div class="ldots"><div class="ldot on"></div><div class="ldot"></div><div class="ldot"></div></div>
+    </div>
+    <div class="lr">
+      <h3 id="l-title">Acesse sua conta</h3>
+      <p class="sub" id="l-sub">Entre com seu usuário e senha</p>
+      <div id="lerr" class="lerr"></div>
+      <div class="fg"><label>Usuário</label><input type="text" id="iu" placeholder="Seu usuário" autocomplete="username" autocapitalize="none"/></div>
+      <div class="fg" id="l-code-w" style="display:none"><label>Código de acesso</label><input type="text" id="ic" placeholder="0000-0000-0000-0000" autocomplete="off" autocapitalize="characters"/></div>
+      <div class="fg"><label id="l-pass-l">Senha</label><input type="password" id="ip" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div class="fg" id="l-conf-w" style="display:none"><label>Repita a senha</label><input type="password" id="ip2" placeholder="••••••••" autocomplete="new-password"/></div>
+      <button class="btnpr" id="l-btn" onclick="doLogin()">🔐 Entrar no Sistema</button>
+      <button class="l-link" id="l-toggle" onclick="toggleFirstAccess()">Primeiro acesso ou esqueci a senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+  <aside class="sb">
+    <div class="sb-brand">
+      <div class="sb-ico">🩸</div>
+      <div class="sb-txt"><h2>Hemocentro</h2><p>João Pessoa</p></div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-av" id="sb-av">?</div>
+      <div style="min-width:0"><div class="sb-uname" id="sb-uname">—</div><div class="sb-urole" id="sb-urole">—</div></div>
+    </div>
+    <div class="global-search-wrap">
+      <span class="global-search-ico">🔍</span>
+      <input class="global-search-input" id="global-search" type="text" placeholder="Buscar paciente..." oninput="globalSearch(this.value)" onblur="setTimeout(()=>closeGlobalSearch(),200)"/>
+      <div class="search-results-drop" id="search-drop"></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="ni active" data-page="dashboard" onclick="clearDashFilter();showPage('dashboard')"><span class="nil"><span class="ico">🏠</span>Dashboard</span></div>
+      <div class="ni" id="ni-t" onclick="toggleNC('t',this)"><span class="nil"><span class="ico">💉</span>Transfusão</span><span class="chv">›</span></div>
+      <div class="nc" id="nc-t">
+        <div class="nch" onclick="setChildActive(this);filterDash('Transfusão','Feminino','Manhã')"><span>👩</span>Feminino – Manhã</div>
+        <div class="nch" onclick="setChildActive(this);filterDash('Transfusão','Feminino','Tarde')"><span>👩</span>Feminino – Tarde</div>
+        <div class="nch" onclick="setChildActive(this);filterDash('Transfusão','Masculino','Manhã')"><span>👨</span>Masculino – Manhã</div>
+        <div class="nch" onclick="setChildActive(this);filterDash('Transfusão','Masculino','Tarde')"><span>👨</span>Masculino – Tarde</div>
+      </div>
+      <div class="ni" id="ni-p" onclick="toggleNC('p',this)"><span class="nil"><span class="ico">👶</span>Pediátrica</span><span class="chv">›</span></div>
+      <div class="nc" id="nc-p">
+        <div class="nch" onclick="setChildActive(this);filterDash('Pediátrica',null,'Manhã')"><span>🌅</span>Manhã</div>
+        <div class="nch" onclick="setChildActive(this);filterDash('Pediátrica',null,'Tarde')"><span>🌆</span>Tarde</div>
+      </div>
+      <div class="ni" onclick="setActive(this);filterDash('Medicações')"><span class="nil"><span class="ico">💊</span>Medicações</span></div>
+      <div class="ni" id="ni-s" onclick="toggleNC('s',this)"><span class="nil"><span class="ico">🩸</span>Sangria Terapêutica</span><span class="chv">›</span></div>
+      <div class="nc" id="nc-s">
+        <div class="nch" onclick="setChildActive(this);filterDash('Sangria','Feminino')"><span>👩</span>Feminino</div>
+        <div class="nch" onclick="setChildActive(this);filterDash('Sangria','Masculino')"><span>👨</span>Masculino</div>
+      </div>
+      <div class="ni" data-page="patients" onclick="showPage('patients')"><span class="nil"><span class="ico">👥</span>Pacientes</span></div>
+      <div class="ni" data-page="relatorios" onclick="showPage('relatorios')"><span class="nil"><span class="ico">📊</span>Relatórios</span></div>
+      <div class="ni" data-page="alertas" onclick="showPage('alertas')"><span class="nil"><span class="ico">🔔</span>Alertas <span id="alert-count-badge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;font-size:.58rem;padding:1px 5px;font-weight:800;margin-left:4px">0</span></span></div>
+      <div class="ni" data-page="historico" onclick="showPage('historico')"><span class="nil"><span class="ico">📋</span>Histórico Paciente</span></div>
+      <div class="ni g-only" data-page="mgmt" onclick="showPage('mgmt')"><span class="nil"><span class="ico">⚙️</span>Painel do Gestor</span></div>
+      <div class="ni g-only" data-page="usuarios" onclick="showPage('usuarios')"><span class="nil"><span class="ico">👤</span>Usuários</span></div>
+    </nav>
+    <div class="sb-foot"><button class="btnout" onclick="doLogout()">↩ Sair</button></div>
+  </aside>
+
+  <header class="topbar">
+    <div class="tb-left">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="tb-title"><h1 id="page-title">Sistema de Agendamentos</h1><p id="page-date">—</p></div>
+    </div>
+    <div class="tb-right">
+      <div style="position:relative">
+        <button class="nbb" id="notif-btn" title="Notificações" onclick="toggleNotifPanel()">🔔<span class="nbadge" id="n-badge" style="display:none">0</span></button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-hdr"><h3>🔔 Notificações</h3><span class="notif-clear" onclick="clearNotifs()">Limpar tudo</span></div>
+          <div class="notif-list" id="notif-list"><div class="notif-empty">Nenhuma notificação</div></div>
+        </div>
+      </div>
+      <button class="nbb" id="btn-install" title="Instalar App" style="display:none" onclick="installApp()">📲</button>
+      <div class="upill" title="Alterar minha senha" onclick="openChangePass()">
+        <div class="av" id="av-l">?</div>
+        <div class="ui"><p id="u-name">—</p><span id="u-role">—</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div id="conn-bar">Sem conexão com o servidor. Os dados podem estar desatualizados e nada será salvo até voltar.</div>
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="stats-row">
+        <div class="scard ct fu"><div class="sico ct">💉</div><div><div class="snum">1</div><div class="slbl2">Transfusão</div><div class="ssub" id="sc-t">—</div></div></div>
+        <div class="scard cp fu1"><div class="sico cp">👶</div><div><div class="snum">2</div><div class="slbl2">Pediátrica</div><div class="ssub" id="sc-p">—</div></div></div>
+        <div class="scard cm fu2"><div class="sico cm">💊</div><div><div class="snum">3</div><div class="slbl2">Medicações</div><div class="ssub" id="sc-m">—</div></div></div>
+        <div class="scard cs fu3"><div class="sico cs">🩸</div><div><div class="snum">4</div><div class="slbl2">Sangria</div><div class="ssub" id="sc-s">—</div></div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="col-main">
+          <div class="panel fu1">
+            <div class="ph">
+              <div>
+                <div class="pt" id="dash-title">Agendamentos de Hoje</div>
+                <div class="pd" id="today-lbl">—</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <button onclick="navDate(-1)" style="background:#f1f5f9;border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">‹</button>
+                <button onclick="goTodayDash()" style="background:#f1f5f9;border:none;border-radius:8px;padding:0 10px;height:28px;cursor:pointer;font-size:.68rem;font-weight:700;transition:background .15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Hoje</button>
+                <button onclick="navDate(1)" style="background:#f1f5f9;border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">›</button>
+                <span class="plink" onclick="showPage('patients')">Ver todos →</span>
+              </div>
+            </div>
+            <div id="appt-list"></div>
+          </div>
+          <div class="ibar fu3">
+            <div class="ic"><div class="ii">👥</div><div class="in" id="tot-p">0</div><div class="il">Total</div></div>
+            <div class="ic"><div class="ii">✅</div><div class="in" id="tot-ok" style="color:var(--ok)">0</div><div class="il">Confirmados</div></div>
+            <div class="ic"><div class="ii">⏳</div><div class="in" id="tot-pend" style="color:var(--warn)">0</div><div class="il">Pendentes</div></div>
+            <div class="ic"><div class="ii">❌</div><div class="in" id="tot-canc" style="color:var(--danger)">0</div><div class="il">Cancelados</div></div>
+          </div>
+        </div>
+        <div class="col-side">
+          <div class="panel fu1">
+            <div class="cal-nav"><span class="cal-month" id="cal-lbl">—</span><div class="cal-btns"><button class="cb2" onclick="changeMonth(-1)">‹</button><button class="cb2 tod" onclick="goToday()">Hoje</button><button class="cb2" onclick="changeMonth(1)">›</button></div></div>
+            <div class="cgrid" id="cal-grid"><div class="cdn">DOM</div><div class="cdn">SEG</div><div class="cdn">TER</div><div class="cdn">QUA</div><div class="cdn">QUI</div><div class="cdn">SEX</div><div class="cdn">SÁB</div></div>
+            <div class="cal-leg">
+              <div class="cli"><div class="cld" style="background:var(--T)"></div>Transfusão</div>
+              <div class="cli"><div class="cld" style="background:var(--P)"></div>Pediátrica</div>
+              <div class="cli"><div class="cld" style="background:var(--M)"></div>Medicações</div>
+              <div class="cli"><div class="cld" style="background:var(--S)"></div>Sangria</div>
+            </div>
+          </div>
+          <div class="panel fu2">
+            <div class="pt">Resumo do Dia</div>
+            <div style="font-size:.67rem;color:var(--light);margin-bottom:12px;margin-top:2px;" id="sum-date">—</div>
+            <div id="sum-rows"></div>
+            <div class="stot" id="sum-tot"></div>
+            <button class="btnnew can-edit" onclick="openAddPatient()">+ Novo Agendamento</button>
+          </div>
+          <div class="panel fu3">
+            <div class="pt" style="margin-bottom:10px;">Capacidade por Turno</div>
+            <div id="cap-bars"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENTS -->
+    <div id="page-patients" class="page">
+      <div class="page-hdr"><div><h2>👥 Lista de Pacientes</h2><p>Todos os agendamentos cadastrados no sistema</p></div><button class="btn-add can-edit" onclick="openAddPatient()">+ Inserir Paciente</button></div>
+      <div class="panel">
+        <div class="search-bar">
+          <input type="text" id="srch" placeholder="🔍 Buscar por nome ou protocolo..." oninput="renderPTable()"/>
+          <select id="f-svc" onchange="renderPTable()"><option value="">Todos Serviços</option><option>Transfusão</option><option>Pediátrica</option><option>Medicações</option><option>Sangria</option></select>
+          <select id="f-st" onchange="renderPTable()"><option value="">Todos Status</option><option>Confirmado</option><option>Pendente</option><option>Cancelado</option></select>
+        </div>
+        <div class="ptable-wrap">
+          <table class="ptable">
+            <thead><tr><th>Data</th><th>Hora</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Info</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="ptable-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div id="page-relatorios" class="page">
+      <div class="page-hdr no-print">
+        <div><h2>📊 Relatórios</h2><p>Análise completa dos agendamentos</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-rel" onclick="printRelatorio()">🖨️ Imprimir</button>
+          <button class="btn-rel" onclick="exportCSV()">📥 Exportar CSV</button>
+          <button class="btn-rel primary" onclick="exportPDF()">📄 Exportar PDF</button>
+        </div>
+      </div>
+
+      <!-- PERÍODO -->
+      <div class="rel-section rel-filter no-print">
+        <label>De<input type="date" id="rel-ini" onchange="renderRelatorio()"/></label>
+        <label>Até<input type="date" id="rel-fim" onchange="renderRelatorio()"/></label>
+        <button class="btn-rel" onclick="setRelRange('hoje')">Hoje</button>
+        <button class="btn-rel" onclick="setRelRange('mes')">Este mês</button>
+      </div>
+
+      <!-- RESUMO GERAL -->
+      <div class="rel-section fu">
+        <h3>📈 Resumo Geral <span class="rel-period" id="rel-period"></span></h3>
+        <div class="stat-grid" id="rel-stat-grid"></div>
+      </div>
+
+      <!-- POR SERVIÇO -->
+      <div class="rel-section fu1">
+        <h3>🏥 Ocupação por Serviço</h3>
+        <div id="rel-progress"></div>
+      </div>
+
+      <!-- POR STATUS -->
+      <div class="rel-section fu2">
+        <h3>📋 Pacientes por Status</h3>
+        <div class="ptable-wrap">
+          <table class="rel-table">
+            <thead><tr><th>Status</th><th>Quantidade</th><th>%</th><th>Serviços</th></tr></thead>
+            <tbody id="rel-status-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- LISTA COMPLETA -->
+      <div class="rel-section fu3">
+        <h3>📝 Lista Completa de Agendamentos</h3>
+        <div class="ptable-wrap">
+          <table class="rel-table" id="rel-full-table">
+            <thead><tr><th>#</th><th>Data</th><th>Hora</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Tipo Sang.</th><th>Info</th><th>Status</th></tr></thead>
+            <tbody id="rel-full-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MGMT -->
+    <div id="page-mgmt" class="page">
+      <div class="page-hdr"><div><h2>⚙️ Painel do Gestor</h2><p>Configure vagas por serviço e turno</p></div><button class="btn-add" onclick="openAddPatient()">+ Inserir Paciente</button></div>
+      <div class="mgmt-grid">
+        <div class="mgmt-col">
+          <div class="cap-card"><div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#dbeafe,#eff6ff)">💉</div><div><h3>Transfusão</h3><p>Vagas por turno e gênero</p></div></div><div class="cap-rows" id="cap-T"></div></div>
+          <div class="cap-card"><div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#fef3c7,#fffbeb)">👶</div><div><h3>Pediátrica</h3><p>Vagas por turno</p></div></div><div class="cap-rows" id="cap-P"></div></div>
+        </div>
+        <div class="mgmt-col">
+          <div class="cap-card"><div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#d1fae5,#ecfdf5)">💊</div><div><h3>Medicações</h3><p>Vagas por turno</p></div></div><div class="cap-rows" id="cap-M"></div></div>
+          <div class="cap-card"><div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#ede9fe,#f5f3ff)">🩸</div><div><h3>Sangria Terapêutica</h3><p>Vagas por turno e gênero</p></div></div><div class="cap-rows" id="cap-S"></div></div>
+        </div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#e2e8f0,#f8fafc)">💾</div><div><h3>Backup dos dados</h3><p>Cópia de segurança dos agendamentos</p></div></div>
+        <div class="backup-actions">
+          <button class="btn-rel primary" onclick="exportBackup()">📤 Exportar backup</button>
+          <button class="btn-rel" onclick="document.getElementById('backup-file').click()">📥 Importar backup</button>
+          <input type="file" id="backup-file" accept="application/json,.json" style="display:none" onchange="importBackup(this)"/>
+        </div>
+        <div id="legacy-box" style="display:none;margin:0 16px 14px;padding:12px 14px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;font-size:.76rem;color:#92400e;line-height:1.5">
+          <strong id="legacy-text"></strong>
+          <div style="margin-top:8px"><button class="btn-rel" onclick="sendLegacy()">☁️ Enviar para o banco</button></div>
+        </div>
+        <p class="backup-note">O arquivo contém dados de pacientes (LGPD): guarde em local seguro. Importar acrescenta os registros que faltam, sem apagar nem alterar os que já existem.</p>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="page-usuarios" class="page">
+      <div class="page-hdr"><div><h2>👤 Usuários do Sistema</h2><p>Gerencie acessos e permissões</p></div><button class="btn-add" onclick="openAddUser()">+ Novo Usuário</button></div>
+      <div class="user-cards" id="user-cards"></div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div id="page-historico" class="page">
+      <div class="page-hdr">
+        <div><h2>📋 Histórico do Paciente</h2><p id="hist-page-sub">Selecione um paciente para ver o histórico</p></div>
+        <button class="btn-add" onclick="showPage('patients')">← Voltar</button>
+      </div>
+      <div id="hist-content"></div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div id="page-alertas" class="page">
+      <div class="page-hdr"><div><h2>🔔 Central de Alertas</h2><p>Vagas lotadas, pendências e notificações do sistema</p></div></div>
+      <div id="alerts-content"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL: PATIENT -->
+<div class="modal-bg" id="modal-pat">
+  <div class="modal">
+    <h2 id="m-title">Inserir Paciente</h2><p class="msub">Preencha os dados do agendamento</p>
+    <div class="mfg" style="background:linear-gradient(90deg,#eff6ff,#f5f3ff);border-radius:12px;padding:12px 14px;border:1.5px solid #bfdbfe;margin-bottom:4px;">
+      <label style="color:#1e40af;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">📅 Data do Agendamento</label>
+      <input type="date" id="m-appt-date" style="margin-top:6px;width:100%;padding:10px 12px;border:1.5px solid #bfdbfe;border-radius:9px;font-family:inherit;font-size:.9rem;font-weight:700;color:#1e40af;background:#fff;outline:none;"/>
+      <div style="font-size:.67rem;color:#64748b;margin-top:5px;">💡 Pode agendar para qualquer data futura</div>
+    </div>
+    <div class="mrow">
+      <div class="mfg"><label>Nome Completo</label><input type="text" id="m-name" placeholder="Nome do paciente"/></div>
+      <div class="mfg"><label>Data de Nasc.</label><input type="date" id="m-dob"/></div>
+    </div>
+    <div class="mrow">
+      <div class="mfg"><label>Serviço</label><select id="m-svc" onchange="updModal()"><option value="Transfusão">Transfusão</option><option value="Pediátrica">Pediátrica</option><option value="Medicações">Medicações</option><option value="Sangria">Sangria</option></select></div>
+      <div class="mfg"><label>Turno</label><select id="m-turn"><option value="Manhã">Manhã (07h–12h)</option><option value="Tarde">Tarde (12h–18h)</option></select></div>
+    </div>
+    <div class="mrow">
+      <div class="mfg"><label>Horário</label><input type="time" id="m-time" min="07:00" max="18:00"/></div>
+      <div class="mfg" id="m-g-grp"><label>Gênero</label><select id="m-gender"><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select></div>
+    </div>
+    <div class="mrow">
+      <div class="mfg"><label>Tipo Sanguíneo</label><select id="m-blood"><option value="">Não informado</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+      <div class="mfg"><label>Status</label><select id="m-status"><option value="Confirmado">Confirmado</option><option value="Pendente">Pendente</option><option value="Cancelado">Cancelado</option></select></div>
+    </div>
+    <div class="mfg" id="m-extra-w" style="display:none"><label id="m-extra-l">Info</label><input type="text" id="m-extra" placeholder=""/></div>
+    <div class="mrow">
+      <div class="mfg"><label>📱 Celular (WhatsApp)</label><input type="tel" id="m-phone" placeholder="(83) 9 9999-9999"/></div>
+      <div class="mfg"><label>Observações</label><input type="text" id="m-obs" placeholder="Anotação opcional"/></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-pat')">Cancelar</button><button class="btn-confirm" onclick="savePat()">💾 Salvar</button></div>
+  </div>
+</div>
+
+<!-- MODAL: DELETE -->
+<div class="modal-bg" id="modal-del">
+  <div class="modal">
+    <h2 style="color:var(--danger)">⚠️ Confirmar Exclusão</h2><p class="msub">Esta ação não pode ser desfeita.</p>
+    <div style="background:#fef2f2;border-radius:12px;padding:14px;border:1px solid #fecaca;">
+      <p style="font-size:.85rem;font-weight:700;color:#991b1b;" id="del-name">—</p>
+      <p style="font-size:.72rem;color:#b91c1c;margin-top:3px;" id="del-info">—</p>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-del')">Cancelar</button><button class="btn-del" onclick="confirmDel()">🗑️ Excluir</button></div>
+  </div>
+</div>
+
+<!-- MODAL: USER -->
+<div class="modal-bg" id="modal-user">
+  <div class="modal">
+    <h2 id="mu-title">Novo Usuário</h2><p class="msub" id="mu-sub">O sistema gera um código para a pessoa criar a própria senha</p>
+    <div class="mfg"><label>Nome Completo</label><input type="text" id="mu-name" placeholder="Nome do usuário"/></div>
+    <div class="mrow">
+      <div class="mfg"><label>Usuário (login)</label><input type="text" id="mu-user" placeholder="ex: recepcao1" autocapitalize="none"/></div>
+      <div class="mfg"><label>Perfil</label><select id="mu-role"><option value="recepcao">Recepção</option><option value="gestor">Gestor</option><option value="medico">Médico</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-user')">Cancelar</button><button class="btn-confirm" id="mu-save" onclick="saveUser()">✅ Salvar</button></div>
+  </div>
+</div>
+
+<!-- MODAL: CÓDIGO -->
+<div class="modal-bg" id="modal-code">
+  <div class="modal">
+    <h2>🔑 Código de acesso</h2><p class="msub" id="code-sub">—</p>
+    <div class="code-box" id="code-value">—</div>
+    <p class="code-note">Passe este código só para a pessoa. Ela escolhe "Primeiro acesso ou esqueci a senha" na tela de login e cria a própria senha. Vale por 7 dias e uma única vez, e <strong>não será mostrado de novo</strong>.</p>
+    <div class="modal-footer"><button class="btn-cancel" onclick="copyCode()">📋 Copiar</button><button class="btn-confirm" onclick="closeCodeModal()">Concluir</button></div>
+  </div>
+</div>
+
+<!-- MODAL: SENHA -->
+<div class="modal-bg" id="modal-pass">
+  <div class="modal">
+    <h2>Alterar senha</h2><p class="msub">Escolha uma nova senha</p>
+    <div class="mfg"><label>Nova senha</label><input type="password" id="pw-new" placeholder="mínimo 8 caracteres" autocomplete="new-password"/></div>
+    <div class="mfg"><label>Repita a nova senha</label><input type="password" id="pw-conf" autocomplete="new-password"/></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-pass')">Cancelar</button><button class="btn-confirm" onclick="saveChangePass()">✅ Salvar senha</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DADOS PERSISTENTES
+// ══════════════════════════════════════════════
+const SB_URL='https://ohuaoncwgioawgptyqgz.supabase.co';
+// Chave pública: o que protege os dados são as regras de acesso (RLS) das tabelas ag_*.
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9odWFvbmN3Z2lvYXdncHR5cWd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NzQ1MjAsImV4cCI6MjEwMTU1MDUyMH0.ckf7P-qPqGyoLZgW2MUrhQBBC_Ei9MW2t1nohi1SXDM';
+const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY):null;
+const toEmail=u=>`${u}@ag.hemocentro.invalid`;
+const DEF_CAPS={T:{fmanha:3,ftarde:3,mmanha:3,mtarde:3},P:{manha:2,tarde:2},M:{manha:5,tarde:5},S:{fmanha:5,ftarde:5,mmanha:5,mtarde:5}};
+function normalizeCaps(c){
+  const out={};
+  for(const s in DEF_CAPS){out[s]={};for(const k in DEF_CAPS[s]){const n=c?.[s]?.[k];out[s][k]=Number.isFinite(n)&&n>=0?n:DEF_CAPS[s][k];}}
+  return out;
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function escObj(o){const r={};for(const k in o)r[k]=typeof o[k]==='string'?esc(o[k]):o[k];return r;}
+
+let users=[], patients=[], caps=normalizeCaps(DEF_CAPS);
+let curUser=null, editId=null, delId=null, editUId=null;
+let viewDate = new Date(); // Date currently shown in dashboard
+let calY=new Date().getFullYear(), calM=new Date().getMonth();
+let dashFilter=null, histRef=null, capsDraft=null, busy=false;
+
+// ── Conversão linha do banco ⇄ objeto usado nas telas ──
+function fromRow(r){
+  return{id:r.id,proto:r.proto||'',name:r.nome,dob:r.nascimento||'',apptDate:r.data,time:r.horario,service:r.servico,turn:r.turno,
+    gender:r.genero||'',blood:r.tipo_sanguineo||'',status:r.status,extra:r.info||'',phone:r.telefone||'',obs:r.obs||'',encaixe:!!r.encaixe,createdBy:r.criado_por||''};
+}
+function toRow(p){
+  return{nome:p.name,nascimento:p.dob||null,data:p.apptDate,horario:p.time,servico:p.service,turno:p.turn,genero:p.gender||'',
+    tipo_sanguineo:p.blood||'',status:p.status,info:p.extra||'',telefone:p.phone||'',obs:p.obs||'',encaixe:!!p.encaixe};
+}
+function userFromRow(r){return{id:r.usuario,user:r.usuario,name:r.nome,role:r.papel,ativo:r.ativo,temConta:true};}
+// Mensagem legível para erros do servidor.
+function dbMsg(e){
+  const m=String(e?.message||e||'');
+  if(m.startsWith('LOTADO:')){const[,u,x]=m.split(':');return`Este turno lotou nesse dia (${u}/${x} vagas). A agenda foi atualizada.`;}
+  if(!navigator.onLine||/fetch|network/i.test(m))return'Sem conexão com o servidor. Nada foi salvo.';
+  if(/JWT|token/i.test(m))return'Sua sessão expirou. Entre novamente.';
+  return m||'Erro ao falar com o servidor';
+}
+
+// ── Leitura e sincronização ──
+// O servidor devolve no máximo 1000 linhas por vez: busca em páginas.
+async function fetchPatients(){
+  const out=[],PAGE=1000;
+  for(let from=0;;from+=PAGE){
+    const{data,error}=await sb.from('ag_agendamentos').select('*').order('data').order('id').range(from,from+PAGE-1);
+    if(error)throw error;
+    out.push(...data.map(fromRow));
+    if(data.length<PAGE)break;
+  }
+  return out;
+}
+async function loadData(){
+  const[p,v]=await Promise.all([fetchPatients(),sb.from('ag_vagas').select('caps').eq('id',1).single()]);
+  if(v.error)throw v.error;
+  patients=p;caps=normalizeCaps(v.data.caps);
+}
+async function loadUsers(){
+  if(!isGestor())return;
+  const[{data,error},ct]=await Promise.all([sb.from('ag_usuarios').select('*').order('nome'),sb.rpc('ag_contas')]);
+  if(error)throw error;
+  const contas=new Map((ct.data||[]).map(c=>[c.usuario,c.tem_conta]));
+  users=data.map(r=>({...userFromRow(r),temConta:contas.get(r.usuario)!==false}));
+}
+function setConn(ok){document.getElementById('conn-bar').classList.toggle('show',!ok);}
+let syncTimer=null, syncChannel=null, syncInterval=null;
+async function syncNow(){
+  if(!curUser)return;
+  try{await loadData();setConn(true);refreshViews(true);}
+  catch(e){setConn(false);console.warn('Falha ao sincronizar',e);}
+}
+function queueSync(){clearTimeout(syncTimer);syncTimer=setTimeout(syncNow,400);}
+function startSync(){
+  stopSync();
+  syncChannel=sb.channel('ag-sync')
+    .on('postgres_changes',{event:'*',schema:'public',table:'ag_agendamentos'},queueSync)
+    .on('postgres_changes',{event:'*',schema:'public',table:'ag_vagas'},queueSync)
+    .subscribe();
+  syncInterval=setInterval(syncNow,60000); // rede de segurança se o tempo real cair
+}
+function stopSync(){
+  clearTimeout(syncTimer);clearInterval(syncInterval);
+  if(syncChannel){sb.removeChannel(syncChannel);syncChannel=null;}
+}
+
+// ══════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════
+const RCOL={recepcao:'#2563eb',gestor:'#d97706',medico:'#059669'};
+const RLB={recepcao:'Recepção',gestor:'Gestor',medico:'Médico'};
+function canEdit(){return curUser?.role==='gestor'||curUser?.role==='recepcao';}
+function isGestor(){return curUser?.role==='gestor';}
+function denyEdit(){if(canEdit())return false;showToast('⚠️ Seu perfil não pode alterar agendamentos','warn');return true;}
+
+let firstAccess=false;
+function loginErr(msg){const e=document.getElementById('lerr');e.textContent=msg||'';e.classList.toggle('show',!!msg);}
+function showLogin(msg){
+  document.getElementById('boot').style.display='none';
+  document.getElementById('app-screen').classList.remove('active');
+  document.getElementById('login-screen').classList.add('active');
+  loginErr(msg);
+}
+function toggleFirstAccess(){
+  firstAccess=!firstAccess;
+  document.getElementById('l-title').textContent=firstAccess?'Criar minha senha':'Acesse sua conta';
+  document.getElementById('l-sub').textContent=firstAccess?'Use o código de acesso que o gestor passou para você':'Entre com seu usuário e senha';
+  document.getElementById('l-code-w').style.display=firstAccess?'block':'none';
+  document.getElementById('l-conf-w').style.display=firstAccess?'block':'none';
+  document.getElementById('l-pass-l').textContent=firstAccess?'Nova senha':'Senha';
+  document.getElementById('ip').autocomplete=firstAccess?'new-password':'current-password';
+  document.getElementById('l-btn').textContent=firstAccess?'✅ Criar senha e entrar':'🔐 Entrar no Sistema';
+  document.getElementById('l-toggle').textContent=firstAccess?'Voltar para o login':'Primeiro acesso ou esqueci a senha';
+  loginErr('');
+}
+async function doLogin(){
+  if(busy)return;
+  if(!sb){loginErr('Sem conexão: não foi possível carregar o sistema. Recarregue a página.');return;}
+  const u=document.getElementById('iu').value.trim().toLowerCase(), p=document.getElementById('ip').value;
+  if(!u||!p){loginErr('Informe usuário e senha.');return;}
+  const btn=document.getElementById('l-btn');
+  busy=true;btn.disabled=true;
+  try{
+    if(firstAccess){
+      if(p.length<8){loginErr('A senha precisa ter pelo menos 8 caracteres.');return;}
+      if(p!==document.getElementById('ip2').value){loginErr('As senhas não coincidem.');return;}
+      const{error}=await sb.rpc('ag_primeiro_acesso',{p_usuario:u,p_codigo:document.getElementById('ic').value,p_senha:p});
+      if(error){loginErr(dbMsg(error));return;}
+    }
+    const{data,error}=await sb.auth.signInWithPassword({email:toEmail(u),password:p});
+    if(error){
+      loginErr(/invalid|credential/i.test(error.message)?'Usuário ou senha incorretos.':dbMsg(error));
+      return;
+    }
+    if(firstAccess)toggleFirstAccess();
+    document.getElementById('ic').value='';document.getElementById('ip2').value='';
+    await enterSession(data.session);
+  }catch(e){loginErr(dbMsg(e));}
+  finally{busy=false;btn.disabled=false;}
+}
+async function enterSession(session){
+  const u=session?.user?.app_metadata?.ag_usuario;
+  const{data,error}=u?await sb.from('ag_usuarios').select('*').eq('usuario',u).maybeSingle():{data:null,error:null};
+  if(error)throw error;
+  if(!data||!data.ativo){
+    await sb.auth.signOut();
+    showLogin('Acesso não liberado. Fale com o gestor.');
+    return;
+  }
+  curUser=userFromRow(data);
+  await loadData();
+  await loadUsers();
+  showApp();
+  startSync();
+}
+function clearLocalSession(){
+  curUser=null; histRef=null; dashFilter=null; patients=[]; users=[]; notifDismissed.clear();
+  stopSync();setConn(true);
+  document.querySelectorAll('.modal-bg').forEach(m=>m.classList.remove('open'));
+  document.getElementById('notif-panel').classList.remove('open');
+  closeSidebar();
+  // Não deixa dados do usuário anterior na tela
+  document.getElementById('hist-content').innerHTML=HIST_EMPTY;
+  document.getElementById('hist-page-sub').textContent='Selecione um paciente para ver o histórico';
+  ['appt-list','ptable-body','rel-full-body','user-cards'].forEach(id=>{document.getElementById(id).innerHTML='';});
+  document.getElementById('iu').value='';
+  document.getElementById('ip').value='';
+  showLogin('');
+}
+async function doLogout(){
+  clearLocalSession();
+  try{await sb.auth.signOut();}catch(e){console.warn(e);}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-screen').classList.contains('active'))doLogin();});
+
+function renderUserChrome(){
+  const c=RCOL[curUser.role]||'#2563eb';
+  const grad=`linear-gradient(135deg,${c},#7c3aed)`;
+  ['av-l','sb-av'].forEach(id=>{document.getElementById(id).textContent=curUser.name[0];document.getElementById(id).style.background=grad;});
+  document.getElementById('u-name').textContent=curUser.name;
+  document.getElementById('u-role').textContent=RLB[curUser.role];
+  document.getElementById('sb-uname').textContent=curUser.name;
+  document.getElementById('sb-urole').textContent=RLB[curUser.role];
+  document.querySelectorAll('.g-only').forEach(el=>el.style.display=isGestor()?'flex':'none');
+  document.querySelectorAll('.can-edit').forEach(el=>el.style.display=canEdit()?'':'none');
+}
+function showApp(){
+  document.getElementById('boot').style.display='none';
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+  renderUserChrome();
+  dashFilter=null; viewDate=new Date(); syncCal();
+  updatePageDate(); showPage('dashboard');
+}
+window.onload=async()=>{
+  if(!sb){showLogin('Sem conexão: não foi possível carregar o sistema. Recarregue a página.');return;}
+  // A sessão pode terminar em outra aba ou expirar. setTimeout: chamar o cliente dentro do callback trava.
+  sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'&&curUser)setTimeout(clearLocalSession,0);});
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(session)await enterSession(session);else showLogin('');
+  }catch(e){showLogin(`Não foi possível carregar os dados. ${dbMsg(e)}`);}
+};
+
+// ── Troca de senha ──
+function openChangePass(){
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-conf').value='';
+  document.getElementById('modal-pass').classList.add('open');
+}
+async function saveChangePass(){
+  const n=document.getElementById('pw-new').value, c=document.getElementById('pw-conf').value;
+  if(n.length<8){showToast('⚠️ A senha precisa ter ao menos 8 caracteres','warn');return;}
+  if(n!==c){showToast('⚠️ As senhas não coincidem','warn');return;}
+  const{error}=await sb.auth.updateUser({password:n});
+  if(error){showToast(`❌ ${/different/i.test(error.message)?'Escolha uma senha diferente da atual':dbMsg(error)}`,'err');return;}
+  closeModal('modal-pass');
+  showToast('✅ Senha alterada!','ok');
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DIAS=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+function updatePageDate(){
+  const d=new Date();
+  const s=`${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}, ${DIAS[d.getDay()]}`;
+  const el=i=>document.getElementById(i);
+  if(el('today-lbl'))el('today-lbl').textContent=s;
+  if(el('sum-date'))el('sum-date').textContent=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  if(el('page-date'))el('page-date').textContent=`Hemocentro João Pessoa · ${s}`;
+}
+function getKey(p){
+  const t=p.turn==='Manhã'?'manha':'tarde',g=p.gender==='Feminino'?'f':'m';
+  if(p.service==='Transfusão')return`T.${g}${t}`;
+  if(p.service==='Pediátrica')return`P.${t}`;
+  if(p.service==='Medicações')return`M.${t}`;
+  if(p.service==='Sangria')return`S.${g}${t}`;
+  return'';
+}
+function getMax(k){const[s,v]=k.split('.');return caps[s]?.[v]??0;}
+// As vagas são por dia: conta só os agendamentos da data informada (padrão: dia aberto no dashboard).
+function getUsed(k,ds=todayStr(viewDate)){return patients.filter(p=>effDate(p)===ds&&getKey(p)===k&&p.status!=='Cancelado').length;}
+function hoje(){return todayStr(new Date());}
+function effDate(p){return p.apptDate||hoje();} // registros antigos sem data contam como hoje
+function byDateTime(a,b){return(effDate(a)+(a.time||'')).localeCompare(effDate(b)+(b.time||''));}
+function statusBadge(st){return st==='Confirmado'?'<span class="bk">Confirmado</span>':st==='Pendente'?'<span class="bv">Pendente</span>':'<span class="bc">Cancelado</span>';}
+function dmy(d){return d?d.split('-').reverse().join('/'):'—';}
+
+// ══════════════════════════════════════════════
+//  RENDER DASHBOARD
+// ══════════════════════════════════════════════
+function todayStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function patientsForDate(d){ const s=todayStr(d); return patients.filter(p=>effDate(p)===s); }
+function syncCal(){calY=viewDate.getFullYear();calM=viewDate.getMonth();}
+
+function updateDashHeader(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const vd=new Date(viewDate); vd.setHours(0,0,0,0);
+  const diff=Math.round((vd-today)/(1000*60*60*24));
+  const dtLbl=document.getElementById('dash-title');
+  const tlLbl=document.getElementById('today-lbl');
+  const sdLbl=document.getElementById('sum-date');
+  const label=diff===0?'Agendamentos de Hoje':diff===1?'Agendamentos de Amanhã':diff===-1?'Agendamentos de Ontem':`Agendamentos de ${viewDate.getDate()} de ${MESES[viewDate.getMonth()]} de ${viewDate.getFullYear()}`;
+  if(dtLbl) dtLbl.textContent=label;
+  const s=`${viewDate.getDate()} de ${MESES[viewDate.getMonth()]} de ${viewDate.getFullYear()}, ${DIAS[viewDate.getDay()]}`;
+  if(tlLbl) tlLbl.textContent=s;
+  if(sdLbl) sdLbl.textContent=`${String(viewDate.getDate()).padStart(2,'0')}/${String(viewDate.getMonth()+1).padStart(2,'0')}/${viewDate.getFullYear()}`;
+}
+
+function navDate(delta){
+  viewDate=new Date(viewDate);
+  viewDate.setDate(viewDate.getDate()+delta);
+  syncCal();
+  renderDashboard();
+}
+function goTodayDash(){
+  viewDate=new Date();
+  syncCal();
+  renderDashboard();
+}
+
+function renderDashboard(){
+  document.getElementById('sc-t').textContent=`${caps.T.fmanha+caps.T.mmanha}M · ${caps.T.ftarde+caps.T.mtarde}T vagas`;
+  document.getElementById('sc-p').textContent=`${caps.P.manha}M · ${caps.P.tarde}T vagas`;
+  document.getElementById('sc-m').textContent=`${caps.M.manha}M · ${caps.M.tarde}T vagas`;
+  document.getElementById('sc-s').textContent=`${caps.S.fmanha+caps.S.mmanha}M · ${caps.S.ftarde+caps.S.mtarde}T vagas`;
+  updateDashHeader();
+  renderApptList(); renderSummary(); renderCapBars();
+  // Infobar counts for the selected date
+  const dp=patientsForDate(viewDate);
+  document.getElementById('tot-p').textContent=dp.length;
+  document.getElementById('tot-ok').textContent=dp.filter(p=>p.status==='Confirmado').length;
+  document.getElementById('tot-pend').textContent=dp.filter(p=>p.status==='Pendente').length;
+  document.getElementById('tot-canc').textContent=dp.filter(p=>p.status==='Cancelado').length;
+  buildNotifications();
+  buildCalendar(calY,calM,viewDate.getDate());
+}
+
+function periodBlock(turn,maxKey,list,showExtra){
+  const cls=turn==='Manhã'?'ma':'ta',em=turn==='Manhã'?'🌅':'🌆',rng=turn==='Manhã'?'07H–12H':'12H–18H';
+  const max=getMax(maxKey),used=list.filter(p=>p.status!=='Cancelado').length;
+  let rows=list.sort(byDateTime).map(raw=>{
+    const p=escObj(raw);
+    const badge=statusBadge(raw.status);
+    const extra=showExtra&&p.extra?` · ${p.extra}`:p.blood?` · ${p.blood}`:'';
+    const acts=canEdit()?`<div class="row-actions"><button class="rbtn" onclick="openEdit('${p.id}')">✏️</button><button class="rbtn del" onclick="openDel('${p.id}')">🗑️</button></div>`:'';
+    return`<div class="ar"><span class="at2">${p.time}</span><div class="ai"><div class="an">${p.name}</div><div class="ap">Prot: ${p.proto}${extra}</div></div>${badge}${acts}</div>`;
+  }).join('');
+  for(let i=0;i<Math.min(Math.max(0,max-used),2);i++)rows+=`<div class="ar" style="opacity:.3"><span class="at2">—</span><div class="ai"><div class="an" style="font-style:italic;color:var(--light)">Vaga disponível</div></div><span class="bv">Aberta</span></div>`;
+  return`<div class="pblock"><div class="phdr2 ${cls}">${em} ${turn.toUpperCase()} · ${rng} · <strong>${used}/${max}</strong></div><div class="pbody">${rows}</div></div>`;
+}
+
+function filterDash(svc,gender=null,turn=null){
+  dashFilter={svc,gender,turn};
+  showPage('dashboard');
+}
+function clearDashFilter(){
+  dashFilter=null;
+  document.querySelectorAll('.nch').forEach(n=>n.classList.remove('active'));
+}
+function renderApptList(){
+  const dayPats=patientsForDate(viewDate);
+  const f=dashFilter;
+  const svcs=[
+    {label:'1. Transfusão',color:'var(--T)',type:'gender',svc:'Transfusão'},
+    {label:'2. Transfusão Pediátrica',color:'var(--P)',type:'flat',svc:'Pediátrica',extra:true},
+    {label:'3. Aplicação de Medicações',color:'var(--M)',type:'flat',svc:'Medicações',extra:true},
+    {label:'4. Sangria Terapêutica',color:'var(--S)',type:'gender',svc:'Sangria'},
+  ].filter(s=>!f||s.svc===f.svc);
+  const turns=f?.turn?[f.turn]:['Manhã','Tarde'];
+  const genders=f?.gender?[f.gender]:['Feminino','Masculino'];
+  let html='';
+  if(f)html+=`<div class="filter-banner"><span>Mostrando: ${[f.svc,f.gender,f.turn].filter(Boolean).join(' · ')}</span><button onclick="clearDashFilter();showPage('dashboard')">Ver todos os serviços</button></div>`;
+  svcs.forEach(s=>{
+    html+=`<span class="slbl3" style="color:${s.color}">${s.label}</span>`;
+    if(s.type==='flat'){
+      turns.forEach(t=>{
+        const list=dayPats.filter(p=>p.service===s.svc&&p.turn===t);
+        const k=(s.svc==='Pediátrica'?'P':'M')+'.'+(t==='Manhã'?'manha':'tarde');
+        html+=periodBlock(t,k,list,!!s.extra);
+      });
+    } else {
+      genders.forEach(g=>{
+        html+=`<div class="ghdr2 ${g==='Feminino'?'f':'m'}" style="margin:8px 0 6px">${g.toUpperCase()}</div>`;
+        turns.forEach(t=>{
+          const list=dayPats.filter(p=>p.service===s.svc&&p.gender===g&&p.turn===t);
+          const sk=s.svc==='Transfusão'?'T':'S',gk=g==='Feminino'?'f':'m',tk=t==='Manhã'?'manha':'tarde';
+          html+=periodBlock(t,`${sk}.${gk}${tk}`,list,false);
+        });
+      });
+    }
+  });
+  document.getElementById('appt-list').innerHTML=html;
+}
+
+function renderSummary(){
+  const ss=[
+    {l:'Transfusão',e:'💉',c:'var(--T)',keys:['T.fmanha','T.ftarde','T.mmanha','T.mtarde']},
+    {l:'Pediátrica',e:'👶',c:'var(--P)',keys:['P.manha','P.tarde']},
+    {l:'Medicações',e:'💊',c:'var(--M)',keys:['M.manha','M.tarde']},
+    {l:'Sangria',   e:'🩸',c:'var(--S)',keys:['S.fmanha','S.ftarde','S.mmanha','S.mtarde']},
+  ];
+  let html='',tu=0,tm=0;
+  const dayP=patientsForDate(viewDate);
+  const getUsedDay=(key)=>dayP.filter(p=>getKey(p)===key&&p.status!=='Cancelado').length;
+  ss.forEach(s=>{
+    const u=s.keys.reduce((a,k)=>a+getUsedDay(k),0),m=s.keys.reduce((a,k)=>a+getMax(k),0);
+    tu+=u;tm+=m;
+    html+=`<div class="sr"><div class="sl"><span style="font-size:.9rem">${s.e}</span>${s.l}</div><div class="sv" style="color:${s.c}">${u}/${m} <span style="font-weight:400;color:var(--light);font-size:.67rem">vagas</span></div></div>`;
+  });
+  document.getElementById('sum-rows').innerHTML=html;
+  document.getElementById('sum-tot').innerHTML=`<span>Total</span><span>${tu}/${tm}</span>`;
+}
+
+function renderCapBars(){
+  const items=[
+    {l:'Transfusão Manhã', used:getUsed('T.fmanha')+getUsed('T.mmanha'),max:caps.T.fmanha+caps.T.mmanha,c:'var(--T)'},
+    {l:'Transfusão Tarde', used:getUsed('T.ftarde')+getUsed('T.mtarde'),max:caps.T.ftarde+caps.T.mtarde,c:'var(--T)'},
+    {l:'Pediátrica Manhã', used:getUsed('P.manha'),max:caps.P.manha,c:'var(--P)'},
+    {l:'Pediátrica Tarde', used:getUsed('P.tarde'),max:caps.P.tarde,c:'var(--P)'},
+    {l:'Medicações Manhã', used:getUsed('M.manha'),max:caps.M.manha,c:'var(--M)'},
+    {l:'Medicações Tarde', used:getUsed('M.tarde'),max:caps.M.tarde,c:'var(--M)'},
+    {l:'Sangria Manhã',    used:getUsed('S.fmanha')+getUsed('S.mmanha'),max:caps.S.fmanha+caps.S.mmanha,c:'var(--S)'},
+    {l:'Sangria Tarde',    used:getUsed('S.ftarde')+getUsed('S.mtarde'),max:caps.S.ftarde+caps.S.mtarde,c:'var(--S)'},
+  ];
+  document.getElementById('cap-bars').innerHTML=items.map(r=>{
+    const pct=r.max?Math.round(r.used/r.max*100):0;
+    const clr=pct>=100?'var(--danger)':pct>=80?'var(--warn)':r.c;
+    return`<div class="caprow"><div class="caplbl"><span>${r.l}</span><span style="font-weight:700">${r.used}/${r.max}</span></div><div class="capbar"><div class="capfill" style="width:${pct}%;background:${clr}"></div></div></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════════════
+function buildCalendar(yr,mo,sel){
+  document.getElementById('cal-lbl').textContent=`${MESES[mo]} de ${yr}`;
+  const g=document.getElementById('cal-grid');
+  while(g.children.length>7)g.removeChild(g.lastChild);
+  const first=new Date(yr,mo,1).getDay(),days=new Date(yr,mo+1,0).getDate();
+  const t=new Date(),isCur=t.getFullYear()===yr&&t.getMonth()===mo;
+  for(let i=0;i<first;i++)g.appendChild(document.createElement('div'));
+  for(let d=1;d<=days;d++){
+    const c=document.createElement('div');
+    const isSelDate=yr===viewDate.getFullYear()&&mo===viewDate.getMonth()&&d===viewDate.getDate();
+    c.className='cd'+(isCur&&d===t.getDate()?' tod2':'')+(isSelDate&&!(isCur&&d===t.getDate())?' sel':'');
+    const dayKey=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayHasPats=patients.filter(p=>effDate(p)===dayKey&&p.status!=='Cancelado');
+    const dots=[{s:'Transfusão',k:'T'},{s:'Pediátrica',k:'P'},{s:'Medicações',k:'M'},{s:'Sangria',k:'S'}]
+      .filter(x=>dayHasPats.some(p=>p.service===x.s))
+      .map(x=>`<div class="cdot" style="background:var(--${x.k})"></div>`).join('');
+    c.innerHTML=`<div class="cn">${d}</div><div class="cdots">${dots}</div>`;
+    c.onclick=()=>{ viewDate=new Date(yr,mo,d); renderDashboard(); };
+    g.appendChild(c);
+  }
+}
+function changeMonth(d){calM+=d;if(calM<0){calM=11;calY--;}else if(calM>11){calM=0;calY++;}buildCalendar(calY,calM,0);}
+function goToday(){const t=new Date();calY=t.getFullYear();calM=t.getMonth();viewDate=new Date();renderDashboard();}
+
+// ══════════════════════════════════════════════
+//  PATIENTS TABLE
+// ══════════════════════════════════════════════
+function renderPTable(){
+  const srch=(document.getElementById('srch')?.value||'').toLowerCase();
+  const fS=document.getElementById('f-svc')?.value||'';
+  const fT=document.getElementById('f-st')?.value||'';
+  const list=patients.filter(p=>
+    (!srch||(p.name||'').toLowerCase().includes(srch)||(p.proto||'').toLowerCase().includes(srch))
+    &&(!fS||p.service===fS)&&(!fT||p.status===fT)
+  ).sort(byDateTime);
+  const tm={Transfusão:'st-t',Pediátrica:'st-p',Medicações:'st-m',Sangria:'st-s'};
+  const tb=document.getElementById('ptable-body');
+  if(!list.length){tb.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--light)">Nenhum paciente encontrado</td></tr>`;return;}
+  const ed=canEdit();
+  tb.innerHTML=list.map(raw=>{
+    const p=escObj(raw);
+    const editBtn=ed?`<button class="tbl-act" onclick="openEdit('${p.id}')" title="Editar">✏️</button>`:'';
+    const delBtn=ed?`<button class="tbl-act del" onclick="openDel('${p.id}')" title="Excluir">🗑️</button>`:'';
+    return`<tr><td style="font-size:.72rem;color:var(--muted);white-space:nowrap">${dmy(p.apptDate)}</td><td>${p.time}</td><td><div class="td-name" style="cursor:pointer;color:var(--T)" onclick="openHistorico('${p.id}')">${p.name}</div></td><td class="td-proto">${p.proto||'—'}</td><td><span class="stag ${tm[raw.service]||''}">${p.service}</span></td><td>${p.turn}</td><td>${p.gender||'—'}</td><td style="font-size:.69rem;color:var(--muted)">${p.blood||''}${p.extra?' · '+p.extra:''}</td><td>${statusBadge(raw.status)}</td><td><div style="display:flex;gap:3px;flex-wrap:wrap">${editBtn}<button class="tbl-act" onclick="openHistorico('${p.id}')" title="Histórico">📋</button><button class="tbl-act" onclick="sendWhatsAppById('${p.id}')" title="WhatsApp" style="color:#25D366">💬</button><button class="tbl-act" onclick="printFicha('${p.id}')" title="Ficha">🖨️</button>${delBtn}</div></td></tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  RELATÓRIOS
+// ══════════════════════════════════════════════
+function setRelRange(kind){
+  const d=new Date();
+  const ini=kind==='mes'?new Date(d.getFullYear(),d.getMonth(),1):d;
+  const fim=kind==='mes'?new Date(d.getFullYear(),d.getMonth()+1,0):d;
+  document.getElementById('rel-ini').value=todayStr(ini);
+  document.getElementById('rel-fim').value=todayStr(fim);
+  renderRelatorio();
+}
+function relRange(){
+  const iniEl=document.getElementById('rel-ini'),fimEl=document.getElementById('rel-fim');
+  if(!iniEl.value)iniEl.value=hoje();
+  if(!fimEl.value)fimEl.value=iniEl.value;
+  if(iniEl.value>fimEl.value)[iniEl.value,fimEl.value]=[fimEl.value,iniEl.value];
+  return[iniEl.value,fimEl.value];
+}
+function relPatients(){
+  const[ini,fim]=relRange();
+  return patients.filter(p=>effDate(p)>=ini&&effDate(p)<=fim).sort(byDateTime);
+}
+function renderRelatorio(){
+  const[ini,fim]=relRange();
+  const list=relPatients();
+  const dias=Math.round((new Date(fim+'T12:00')-new Date(ini+'T12:00'))/86400000)+1;
+  const total=list.length;
+  const ok=list.filter(p=>p.status==='Confirmado').length;
+  const pend=list.filter(p=>p.status==='Pendente').length;
+  const canc=list.filter(p=>p.status==='Cancelado').length;
+  const svcs=[
+    {l:'Transfusão',keys:['T.fmanha','T.ftarde','T.mmanha','T.mtarde'],c:'#2563eb'},
+    {l:'Pediátrica',keys:['P.manha','P.tarde'],c:'#d97706'},
+    {l:'Medicações',keys:['M.manha','M.tarde'],c:'#059669'},
+    {l:'Sangria',   keys:['S.fmanha','S.ftarde','S.mmanha','S.mtarde'],c:'#7c3aed'},
+  ];
+  const usedOf=k=>list.filter(p=>getKey(p)===k&&p.status!=='Cancelado').length;
+  // A capacidade cadastrada é por dia; no período multiplica pelos dias corridos.
+  const totalMax=svcs.reduce((a,s)=>a+s.keys.reduce((b,k)=>b+getMax(k),0),0)*dias;
+
+  document.getElementById('rel-period').textContent=ini===fim?`Dia ${dmy(ini)}`:`${dmy(ini)} a ${dmy(fim)} (${dias} dias corridos)`;
+
+  // Stat grid
+  document.getElementById('rel-stat-grid').innerHTML=[
+    {v:total,l:'Total Agendamentos',c:'#0f172a'},
+    {v:ok,l:'Confirmados',c:'#059669'},
+    {v:pend,l:'Pendentes',c:'#d97706'},
+    {v:canc,l:'Cancelados',c:'#dc2626'},
+    {v:totalMax,l:'Vagas no Período',c:'#2563eb'},
+    {v:Math.max(0,totalMax-ok-pend),l:'Vagas Livres',c:'#64748b'},
+  ].map(s=>`<div class="stat-box"><div class="val" style="color:${s.c}">${s.v}</div><div class="lbl">${s.l}</div></div>`).join('');
+
+  // Progress por serviço
+  document.getElementById('rel-progress').innerHTML=svcs.map(s=>{
+    const u=s.keys.reduce((a,k)=>a+usedOf(k),0),m=s.keys.reduce((a,k)=>a+getMax(k),0)*dias;
+    const pct=m?Math.round(u/m*100):0;
+    return`<div class="progress-row"><div class="progress-lbl">${s.l}</div><div class="progress-bar-w"><div class="progress-bar-f" style="width:${Math.min(pct,100)}%;background:${s.c}"></div></div><div class="progress-val" style="color:${s.c}">${u}/${m} (${pct}%)</div></div>`;
+  }).join('');
+
+  // Status table
+  const stData=[
+    {s:'Confirmado',cls:'bk',svcs:{}},{s:'Pendente',cls:'bv',svcs:{}},{s:'Cancelado',cls:'bc',svcs:{}},
+  ];
+  list.forEach(p=>{ const st=stData.find(x=>x.s===p.status); if(st){st.svcs[p.service]=(st.svcs[p.service]||0)+1;} });
+  document.getElementById('rel-status-body').innerHTML=stData.map(d=>{
+    const cnt=Object.values(d.svcs).reduce((a,v)=>a+v,0);
+    const pct=total?Math.round(cnt/total*100):0;
+    const svcStr=esc(Object.entries(d.svcs).map(([k,v])=>`${k}: ${v}`).join(', ')||'—');
+    return`<tr><td><span class="${d.cls}">${d.s}</span></td><td style="font-weight:700">${cnt}</td><td>${pct}%</td><td style="font-size:.72rem;color:var(--muted)">${svcStr}</td></tr>`;
+  }).join('');
+
+  // Full list
+  const tm={Transfusão:'st-t',Pediátrica:'st-p',Medicações:'st-m',Sangria:'st-s'};
+  document.getElementById('rel-full-body').innerHTML=list.length?list.map((raw,i)=>{
+    const p=escObj(raw);
+    return`<tr><td style="color:var(--muted);font-size:.7rem">${i+1}</td><td style="white-space:nowrap">${dmy(p.apptDate)}</td><td>${p.time}</td><td style="font-weight:700">${p.name}</td><td style="font-size:.7rem;color:var(--muted)">${p.proto}</td><td><span class="stag ${tm[raw.service]||''}">${p.service}</span></td><td>${p.turn}</td><td>${p.gender||'—'}</td><td>${p.blood||'—'}</td><td style="font-size:.7rem;color:var(--muted)">${p.extra||'—'}</td><td>${statusBadge(raw.status)}</td></tr>`;
+  }).join(''):`<tr><td colspan="11" style="text-align:center;padding:22px;color:var(--light)">Nenhum agendamento no período</td></tr>`;
+}
+
+function printRelatorio(){
+  renderRelatorio();
+  showPage('relatorios');
+  setTimeout(()=>window.print(),300);
+}
+
+// Formato do Excel em português: separador ";". Prefixo neutraliza fórmulas vindas de texto digitado.
+function csvCell(v){
+  let s=String(v??'');
+  if(/^[=+\-@\t\r]/.test(s))s="'"+s;
+  return /[;"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+}
+function downloadFile(content,type,filename){
+  const url=URL.createObjectURL(new Blob([content],{type}));
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportCSV(){
+  const list=relPatients();
+  if(!list.length){showToast('⚠️ Nenhum agendamento no período','warn');return;}
+  const header=['Data','Horário','Nome','Nascimento','Protocolo','Serviço','Turno','Gênero','Tipo Sanguíneo','Info Extra','Telefone','Observações','Status'];
+  const rows=list.map(p=>[
+    p.apptDate?dmy(p.apptDate):'',p.time,p.name,p.dob?dmy(p.dob):'',p.proto,p.service,p.turn,p.gender,p.blood,p.extra,p.phone,p.obs,p.status
+  ].map(csvCell).join(';'));
+  const[ini,fim]=relRange();
+  downloadFile('\ufeff'+[header.join(';'),...rows].join('\r\n'),'text/csv;charset=utf-8',`hemocentro_agendamentos_${ini}_a_${fim}.csv`);
+  showToast('📥 CSV exportado com sucesso!','ok');
+}
+
+function exportPDF(){
+  const relList=relPatients();
+  if(!relList.length){showToast('⚠️ Nenhum agendamento no período','warn');return;}
+  const[relIni,relFim]=relRange();
+  renderRelatorio();
+  // Gera HTML para impressão como PDF
+  const d=new Date();
+  const dataStr=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  const rows=relList.map((raw,i)=>{const p=escObj(raw);return`
+    <tr>
+      <td>${i+1}</td><td>${dmy(p.apptDate)}</td><td>${p.time}</td><td><strong>${p.name}</strong></td>
+      <td>${p.proto}</td><td>${p.service}</td><td>${p.turn}</td>
+      <td>${p.gender||'—'}</td><td>${p.blood||'—'}</td>
+      <td>${p.extra||'—'}</td><td>${p.status}</td>
+    </tr>`;}).join('');
+  const total=relList.length;
+  const ok=relList.filter(p=>p.status==='Confirmado').length;
+  const pend=relList.filter(p=>p.status==='Pendente').length;
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+  <title>Relatório Hemocentro - ${dataStr}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:20px;color:#111;}
+    h1{color:#2563eb;font-size:18px;margin-bottom:4px;}
+    h2{font-size:13px;color:#64748b;margin-bottom:16px;font-weight:normal;}
+    .stats{display:flex;gap:16px;margin-bottom:20px;}
+    .stat{background:#f1f5f9;padding:10px 16px;border-radius:8px;text-align:center;}
+    .stat .v{font-size:22px;font-weight:900;color:#2563eb;}
+    .stat .l{font-size:11px;color:#64748b;margin-top:2px;}
+    table{width:100%;border-collapse:collapse;font-size:11px;}
+    th{background:#1e40af;color:#fff;padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;}
+    td{padding:6px 10px;border-bottom:1px solid #e2e8f0;}
+    tr:nth-child(even) td{background:#f8fafc;}
+    .ok{background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;}
+    .pend{background:#fef9c3;color:#854d0e;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;}
+    .canc{background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;}
+    @media print{body{padding:10px;}button{display:none;}}
+  </style></head><body>
+  <h1>🩸 Hemocentro de João Pessoa — Relatório de Agendamentos</h1>
+  <h2>Gerado em: ${dataStr} às ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} · Período: ${dmy(relIni)} a ${dmy(relFim)} · Usuário: ${esc(curUser?.name)}</h2>
+  <div class="stats">
+    <div class="stat"><div class="v">${total}</div><div class="l">Total</div></div>
+    <div class="stat"><div class="v" style="color:#059669">${ok}</div><div class="l">Confirmados</div></div>
+    <div class="stat"><div class="v" style="color:#d97706">${pend}</div><div class="l">Pendentes</div></div>
+    <div class="stat"><div class="v" style="color:#dc2626">${total-ok-pend}</div><div class="l">Cancelados</div></div>
+  </div>
+  <table><thead><tr><th>#</th><th>Data</th><th>Hora</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Tipo Sang.</th><th>Info</th><th>Status</th></tr></thead>
+  <tbody>${rows}</tbody></table>
+  <p style="margin-top:16px;font-size:10px;color:#94a3b8;">Hemocentro de João Pessoa — Sistema de Agendamentos — ${dataStr}</p>
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+  const w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();showToast('📄 PDF gerado! Salve como PDF na tela de impressão.','ok');}
+  else showToast('⚠️ Permita pop-ups para exportar PDF','warn');
+}
+
+// ══════════════════════════════════════════════
+//  MGMT
+// ══════════════════════════════════════════════
+function renderMgmt(){
+  capsDraft=JSON.parse(JSON.stringify(caps)); // "+/−" só valem depois de Aplicar
+  renderLegacyBox();
+  mkCC('cap-T',[{l:'Feminino Manhã',k:'fmanha'},{l:'Feminino Tarde',k:'ftarde'},{l:'Masculino Manhã',k:'mmanha'},{l:'Masculino Tarde',k:'mtarde'}],'T');
+  mkCC('cap-P',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'P');
+  mkCC('cap-M',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'M');
+  mkCC('cap-S',[{l:'Feminino Manhã',k:'fmanha'},{l:'Feminino Tarde',k:'ftarde'},{l:'Masculino Manhã',k:'mmanha'},{l:'Masculino Tarde',k:'mtarde'}],'S');
+}
+function mkCC(cid,rows,svc){
+  document.getElementById(cid).innerHTML=rows.map(r=>{
+    const v=capsDraft[svc][r.k],u=getUsed(`${svc}.${r.k}`,hoje()),full=u>=v;
+    return`<div class="cap-row"><div><div class="cap-row-lbl">${r.l}</div><div class="cap-row-sub">Hoje: ${u} de ${v} vagas${full?' · <span style="color:var(--danger);font-weight:700">LOTADO</span>':''}</div></div><div class="cap-ctrl"><button class="ccbtn minus" onclick="chgCap('${svc}','${r.k}',-1)">−</button><span class="cap-num" id="cv-${svc}-${r.k}">${v}</span><button class="ccbtn" onclick="chgCap('${svc}','${r.k}',1)">+</button></div></div>`;
+  }).join('')+`<button class="cap-save" onclick="saveCaps()">✅ Aplicar Alterações</button>`;
+}
+function chgCap(svc,key,d){capsDraft[svc][key]=Math.max(1,capsDraft[svc][key]+d);document.getElementById(`cv-${svc}-${key}`).textContent=capsDraft[svc][key];}
+async function saveCaps(){
+  if(!isGestor())return;
+  const{data,error}=await sb.from('ag_vagas').update({caps:capsDraft}).eq('id',1).select();
+  if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Sem permissão para alterar vagas'}`,'err');return;}
+  caps=normalizeCaps(data[0].caps);
+  renderMgmt();renderDashboard();showToast('✅ Vagas salvas!','ok');
+}
+
+// ── Backup ──
+function exportBackup(){
+  if(!isGestor())return;
+  const data={app:'hemocentro-agendamentos',version:2,exportedAt:new Date().toISOString(),patients,caps};
+  downloadFile(JSON.stringify(data,null,2),'application/json',`hemocentro_backup_${hoje()}.json`);
+  showToast('📤 Backup exportado. Guarde em local seguro.','ok');
+}
+// Registro vindo de backup ou da versão antiga. Retorna null se não puder ser aproveitado.
+function toImportRow(p,i){
+  if(!p||typeof p!=='object'||!String(p.name||'').trim())return null;
+  if(!['Transfusão','Pediátrica','Medicações','Sangria'].includes(p.service)||!['Manhã','Tarde'].includes(p.turn))return null;
+  if(!/^[0-2]\d:[0-5]\d$/.test(p.time||''))return null;
+  const isDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'');
+  return{
+    id:/^[A-Za-z0-9_-]+$/.test(String(p.id))?String(p.id):`imp${Date.now()}_${i}`,
+    proto:p.proto||null,nome:String(p.name).trim(),nascimento:isDate(p.dob)?p.dob:null,
+    data:isDate(p.apptDate)?p.apptDate:hoje(),horario:p.time,servico:p.service,turno:p.turn,
+    genero:['Feminino','Masculino'].includes(p.gender)?p.gender:'',
+    tipo_sanguineo:['A+','A-','B+','B-','AB+','AB-','O+','O-'].includes(p.blood)?p.blood:'',
+    status:['Confirmado','Pendente','Cancelado'].includes(p.status)?p.status:'Pendente',
+    info:p.extra||'',telefone:p.phone||'',obs:p.obs||'',criado_por:p.createdBy||null,
+  };
+}
+// Só acrescenta: registro com o mesmo id no banco nunca é alterado.
+async function importPatients(list,capsIn,pidc){
+  const rows=list.map(toImportRow).filter(Boolean);
+  const ignored=list.length-rows.length;
+  const{data,error}=await sb.rpc('ag_importar',{p_itens:rows,p_caps:capsIn?normalizeCaps(capsIn):null,p_pidc:Number(pidc)||0});
+  if(error)throw error;
+  await loadData();
+  refreshViews();
+  return{novos:data,existentes:rows.length-data,ignored};
+}
+async function importBackup(input){
+  const file=input.files[0];
+  input.value='';
+  if(!file||!isGestor())return;
+  let d;
+  try{d=JSON.parse(await file.text());}catch(e){showToast('❌ Arquivo inválido: não é um JSON','err');return;}
+  if(!d||!Array.isArray(d.patients)){showToast('❌ Arquivo não é um backup válido deste sistema','err');return;}
+  if(!confirm(`Acrescentar ao banco os registros deste backup (${d.patients.length} agendamento(s))?\n\nO que já existe não é alterado. As vagas não mudam.`))return;
+  try{
+    const r=await importPatients(d.patients,null,d.pidc);
+    showToast(`✅ ${r.novos} novo(s), ${r.existentes} já existiam, ${r.ignored} ignorado(s)`,'ok');
+  }catch(e){showToast(`❌ Nada foi importado. ${dbMsg(e)}`,'err');}
+}
+// ── Dados da versão antiga, que guardava tudo no navegador ──
+function readLegacy(){
+  try{
+    const p=JSON.parse(localStorage.getItem('hemo_patients')||'[]');
+    return{patients:Array.isArray(p)?p:[],caps:JSON.parse(localStorage.getItem('hemo_caps')||'null'),pidc:JSON.parse(localStorage.getItem('hemo_pidc')||'0')};
+  }catch(e){return{patients:[],caps:null,pidc:0};}
+}
+function renderLegacyBox(){
+  const n=readLegacy().patients.length;
+  document.getElementById('legacy-box').style.display=n?'block':'none';
+  document.getElementById('legacy-text').textContent=`Este navegador ainda guarda ${n} agendamento(s) da versão antiga, que não estão no banco.`;
+}
+async function sendLegacy(){
+  if(!isGestor())return;
+  const l=readLegacy();
+  if(!confirm(`Enviar ${l.patients.length} agendamento(s) deste navegador para o banco?\n\nAs vagas configuradas aqui também substituem as do banco.`))return;
+  try{
+    const r=await importPatients(l.patients,l.caps,l.pidc);
+    showToast(`✅ ${r.novos} enviado(s), ${r.existentes} já existiam, ${r.ignored} ignorado(s)`,'ok');
+    if(r.ignored===0&&confirm('Tudo enviado. Apagar a cópia antiga deste navegador? Ela guarda dados de pacientes sem proteção.')){
+      Object.keys(localStorage).filter(k=>k.startsWith('hemo_')).forEach(k=>localStorage.removeItem(k));
+    }
+    renderLegacyBox();
+  }catch(e){showToast(`❌ Nada foi enviado. ${dbMsg(e)}`,'err');}
+}
+
+// ══════════════════════════════════════════════
+//  PATIENTS CRUD
+// ══════════════════════════════════════════════
+function openAddPatient(prefillId){
+  if(denyEdit())return;
+  editId=null;
+  document.getElementById('m-title').textContent='Inserir Paciente';
+  ['m-name','m-dob','m-time','m-extra','m-phone','m-obs'].forEach(id=>document.getElementById(id).value='');
+  // Agenda no dia aberto no dashboard; nunca sugere data passada
+  const vd=todayStr(viewDate);
+  document.getElementById('m-appt-date').value=vd>hoje()?vd:hoje();
+  document.getElementById('m-svc').value='Transfusão';
+  document.getElementById('m-turn').value='Manhã';
+  document.getElementById('m-gender').value='Feminino';
+  document.getElementById('m-blood').value='';
+  document.getElementById('m-status').value='Confirmado';
+  const src=typeof prefillId==='string'?patients.find(x=>x.id===prefillId):null;
+  if(src){
+    document.getElementById('m-name').value=src.name||'';
+    document.getElementById('m-dob').value=src.dob||'';
+    document.getElementById('m-phone').value=src.phone||'';
+    document.getElementById('m-blood').value=src.blood||'';
+    if(src.gender)document.getElementById('m-gender').value=src.gender;
+  }
+  updModal();
+  document.getElementById('modal-pat').classList.add('open');
+}
+function openEdit(id){
+  if(denyEdit())return;
+  const p=patients.find(x=>x.id===id);if(!p)return;
+  editId=id;
+  document.getElementById('m-title').textContent='Editar Agendamento';
+  document.getElementById('m-name').value=p.name||'';
+  document.getElementById('m-dob').value=p.dob||'';
+  document.getElementById('m-appt-date').value=p.apptDate||hoje();
+  document.getElementById('m-phone').value=p.phone||'';
+  document.getElementById('m-obs').value=p.obs||'';
+  document.getElementById('m-svc').value=p.service||'Transfusão';
+  document.getElementById('m-turn').value=p.turn||'Manhã';
+  document.getElementById('m-time').value=p.time||'';
+  document.getElementById('m-gender').value=p.gender||'Feminino';
+  document.getElementById('m-blood').value=p.blood||'';
+  document.getElementById('m-status').value=p.status||'Confirmado';
+  document.getElementById('m-extra').value=p.extra||'';
+  updModal();
+  document.getElementById('modal-pat').classList.add('open');
+}
+function updModal(){
+  const svc=document.getElementById('m-svc').value;
+  document.getElementById('m-g-grp').style.display=svc==='Pediátrica'?'none':'block';
+  const ew=document.getElementById('m-extra-w'),el=document.getElementById('m-extra-l'),ei=document.getElementById('m-extra');
+  if(svc==='Medicações'){ew.style.display='block';el.textContent='Medicação';ei.placeholder='Ex: Deferoxamina';}
+  else if(svc==='Pediátrica'){ew.style.display='block';el.textContent='Responsável';ei.placeholder='Nome do responsável';}
+  else{ew.style.display='none';}
+}
+// Celular em dígitos, sem 0 inicial nem o 55 do país (DDD 55 com 11 dígitos é preservado).
+function normPhone(phone){
+  let d=String(phone||'').replace(/\D/g,'').replace(/^0+/,'');
+  if(d.startsWith('55')&&d.length>=12)d=d.slice(2);
+  return d;
+}
+async function savePat(){
+  if(denyEdit()||busy)return;
+  const name=document.getElementById('m-name').value.trim();
+  const time=document.getElementById('m-time').value;
+  const apptDate=document.getElementById('m-appt-date').value;
+  const dob=document.getElementById('m-dob').value;
+  const service=document.getElementById('m-svc').value;
+  const turn=document.getElementById('m-turn').value;
+  const status=document.getElementById('m-status').value;
+  const phone=document.getElementById('m-phone').value.trim();
+  const showsExtra=service==='Medicações'||service==='Pediátrica';
+  if(!name){showToast('⚠️ Informe o nome do paciente','warn');return;}
+  if(!apptDate){showToast('⚠️ Informe a data do agendamento','warn');return;}
+  if(!time){showToast('⚠️ Informe o horário','warn');return;}
+  const[tIni,tFim]=turn==='Manhã'?['07:00','12:00']:['12:00','18:00'];
+  if(time<tIni||time>tFim){showToast(`⚠️ Horário fora do turno da ${turn} (${tIni}–${tFim})`,'warn');return;}
+  if(dob&&dob>hoje()){showToast('⚠️ Data de nascimento no futuro','warn');return;}
+  if(phone&&![10,11].includes(normPhone(phone).length)){showToast('⚠️ Telefone inválido: informe DDD e número','warn');return;}
+  const old=editId?patients.find(x=>x.id===editId):null;
+  const data={
+    name,time,dob,apptDate,service,turn,status,phone,
+    gender:service==='Pediátrica'?'':document.getElementById('m-gender').value,
+    blood:document.getElementById('m-blood').value,
+    extra:showsExtra?document.getElementById('m-extra').value.trim():'',
+    obs:document.getElementById('m-obs').value.trim(),
+    encaixe:!!old?.encaixe,
+  };
+  // Aviso rápido. Quem decide de verdade é o banco, que evita duas reservas na mesma vaga.
+  const slotChanged=!old||old.apptDate!==apptDate||old.service!==service||old.turn!==turn||old.gender!==data.gender||old.status==='Cancelado';
+  if(status!=='Cancelado'&&slotChanged){
+    const k=getKey(data),max=getMax(k);
+    const used=patients.filter(p=>p.id!==editId&&effDate(p)===apptDate&&getKey(p)===k&&p.status!=='Cancelado').length;
+    data.encaixe=false;
+    if(used>=max){
+      const msg=`${service} · ${turn} em ${dmy(apptDate)} está lotado (${used}/${max}).`;
+      if(!isGestor()){showToast(`⚠️ ${msg} Fale com o gestor.`,'warn');return;}
+      if(!confirm(`${msg}\n\nAutorizar encaixe acima do limite?`))return;
+      data.encaixe=true;
+    }
+  }
+  busy=true;
+  try{
+    const q=old?sb.from('ag_agendamentos').update(toRow(data)).eq('id',editId):sb.from('ag_agendamentos').insert(toRow(data));
+    const{data:rows,error}=await q.select();
+    if(error){
+      showToast(`❌ ${dbMsg(error)}`,'err');
+      if(String(error.message).startsWith('LOTADO:'))syncNow();
+      return;
+    }
+    if(!rows?.length){showToast('❌ O registro não foi salvo: ele foi removido ou seu perfil não tem permissão','err');syncNow();return;}
+    const saved=fromRow(rows[0]);
+    patients=old?patients.map(x=>x.id===saved.id?saved:x):[...patients,saved];
+    showToast(old?'✅ Agendamento atualizado!':`✅ Paciente inserido! Protocolo ${saved.proto}`,'ok');
+    if(histRef&&histRef.id===saved.id){histRef.name=saved.name;histRef.dob=saved.dob;}
+    closeModal('modal-pat');
+    refreshViews();
+  }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');}
+  finally{busy=false;}
+}
+function openDel(id){
+  if(denyEdit())return;
+  const p=patients.find(x=>x.id===id);if(!p)return;
+  delId=id;
+  document.getElementById('del-name').textContent=p.name;
+  document.getElementById('del-info').textContent=`${p.service} · ${p.turn} · ${p.time} · ${p.proto}`;
+  document.getElementById('modal-del').classList.add('open');
+}
+async function confirmDel(){
+  if(denyEdit()||busy)return;
+  busy=true;
+  try{
+    const{data,error}=await sb.from('ag_agendamentos').delete().eq('id',delId).select();
+    if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
+    if(!data?.length){showToast('❌ Nada foi excluído: o registro já não existe ou seu perfil não tem permissão','err');syncNow();return;}
+    patients=patients.filter(x=>x.id!==delId);
+    closeModal('modal-del');
+    showToast('🗑️ Paciente removido','warn');
+    refreshViews();
+  }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');}
+  finally{busy=false;}
+}
+// background: atualização vinda de outra tela; não descarta alterações de vagas ainda não aplicadas.
+function refreshViews(background=false){
+  renderDashboard();renderPTable();
+  if(document.getElementById('page-relatorios').classList.contains('active'))renderRelatorio();
+  if(!background&&document.getElementById('page-mgmt').classList.contains('active'))renderMgmt();
+  if(document.getElementById('page-alertas').classList.contains('active'))renderAlerts();
+  if(histRef)renderHistorico();
+}
+
+// ══════════════════════════════════════════════
+//  USERS
+// ══════════════════════════════════════════════
+function renderUsers(){
+  document.getElementById('user-cards').innerHTML=users.map(raw=>{
+    const u=escObj(raw);
+    const c=RCOL[raw.role]||'#6b7280';
+    return`<div class="user-card">
+      <div class="user-card-av" style="background:linear-gradient(135deg,${c},#7c3aed)">${esc(raw.name[0])}</div>
+      <div style="flex:1;min-width:0">
+        <div class="ucard-name">${u.name}</div>
+        <div class="ucard-login">👤 ${u.user}</div>
+        ${raw.temConta?'':'<div class="ucard-pass">⏳ Aguardando primeiro acesso</div>'}
+        <span class="rpill rp-${u.role}">${RLB[raw.role]||u.role}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button class="tbl-act" title="Editar" onclick="openEditUser('${u.id}')">✏️</button>
+        <button class="tbl-act" title="Gerar código de acesso (redefinir senha)" onclick="newCode('${u.id}')">🔑</button>
+        ${raw.id!==curUser.id?`<button class="tbl-act del" title="Remover" onclick="delUser('${u.id}')">🗑️</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function openAddUser(){
+  if(!isGestor())return;
+  editUId=null;
+  document.getElementById('mu-title').textContent='Novo Usuário';
+  document.getElementById('mu-sub').textContent='O sistema gera um código para a pessoa criar a própria senha';
+  ['mu-name','mu-user'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mu-user').disabled=false;
+  document.getElementById('mu-role').value='recepcao';
+  document.getElementById('modal-user').classList.add('open');
+}
+function openEditUser(id){
+  if(!isGestor())return;
+  const u=users.find(x=>x.id===id);if(!u)return;
+  editUId=id;
+  document.getElementById('mu-title').textContent='Editar Usuário';
+  document.getElementById('mu-sub').textContent='O login não muda. Para redefinir a senha, use 🔑 no cartão do usuário.';
+  document.getElementById('mu-name').value=u.name;
+  document.getElementById('mu-user').value=u.user;
+  document.getElementById('mu-user').disabled=true;
+  document.getElementById('mu-role').value=u.role;
+  document.getElementById('modal-user').classList.add('open');
+}
+function showCode(usuario,codigo){
+  document.getElementById('code-sub').textContent=`Para o usuário: ${usuario}`;
+  document.getElementById('code-value').textContent=codigo;
+  document.getElementById('modal-code').classList.add('open');
+}
+function closeCodeModal(){
+  document.getElementById('code-value').textContent='—';
+  closeModal('modal-code');
+}
+async function copyCode(){
+  try{await navigator.clipboard.writeText(document.getElementById('code-value').textContent);showToast('📋 Código copiado','ok');}
+  catch(e){showToast('⚠️ Não foi possível copiar: selecione o código e copie manualmente','warn');}
+}
+async function saveUser(){
+  if(!isGestor()||busy)return;
+  const name=document.getElementById('mu-name').value.trim();
+  const uname=document.getElementById('mu-user').value.trim().toLowerCase();
+  const role=document.getElementById('mu-role').value;
+  if(!name||!uname){showToast('⚠️ Preencha todos os campos','warn');return;}
+  if(!/^[a-z0-9._-]{3,30}$/.test(uname)){showToast('⚠️ Login: de 3 a 30 letras minúsculas, números, ponto, hífen ou _','warn');return;}
+  busy=true;
+  try{
+    if(editUId){
+      const{data,error}=await sb.from('ag_usuarios').update({nome:name,papel:role}).eq('usuario',editUId).select();
+      if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Não foi possível salvar'}`,'err');return;}
+      closeModal('modal-user');
+      showToast('✅ Usuário atualizado!','ok');
+      if(editUId===curUser.id){
+        curUser=userFromRow(data[0]);renderUserChrome();
+        if(!isGestor()){showPage('dashboard');return;}
+      }
+    }else{
+      const{data,error}=await sb.rpc('ag_liberar_usuario',{p_usuario:uname,p_nome:name,p_papel:role});
+      if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
+      closeModal('modal-user');
+      showCode(uname,data);
+    }
+    await loadUsers();renderUsers();
+  }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');}
+  finally{busy=false;}
+}
+async function newCode(id){
+  if(!isGestor())return;
+  if(!confirm(`Gerar um código de acesso para "${id}"?\n\nA senha atual continua valendo até a pessoa usar o código para criar uma nova.`))return;
+  const{data,error}=await sb.rpc('ag_novo_codigo',{p_usuario:id});
+  if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
+  showCode(id,data);
+}
+async function delUser(id){
+  if(!isGestor()||id===curUser.id)return;
+  if(!confirm(`Remover o acesso de "${id}"? A conta será apagada.`))return;
+  const{error}=await sb.rpc('ag_remover_usuario',{p_usuario:id});
+  if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
+  try{await loadUsers();renderUsers();}catch(e){console.warn(e);}
+  showToast('🗑️ Usuário removido','warn');
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function showPage(page){
+  if((page==='mgmt'||page==='usuarios')&&!isGestor())page='dashboard';
+  if(window.innerWidth<768)closeSidebar();
+  const titles={dashboard:'Sistema de Agendamentos',patients:'Pacientes',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
+  document.getElementById('page-title').textContent=titles[page]||'';
+  ['dashboard','patients','relatorios','mgmt','usuarios','historico','alertas'].forEach(p=>{
+    document.getElementById(`page-${p}`)?.classList.toggle('active',p===page);
+  });
+  // Com filtro ativo, o destaque fica no item do filtro (setActive/setChildActive)
+  if(!(page==='dashboard'&&dashFilter)){
+    document.querySelectorAll('.nch').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
+  }
+  if(page==='dashboard')renderDashboard();
+  if(page==='patients')renderPTable();
+  if(page==='relatorios')renderRelatorio();
+  if(page==='mgmt')renderMgmt();
+  if(page==='usuarios'){renderUsers();loadUsers().then(renderUsers).catch(e=>showToast(`❌ ${dbMsg(e)}`,'err'));}
+  if(page==='alertas')renderAlerts();
+  window.scrollTo(0,0);
+}
+function setActive(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.nch').forEach(n=>n.classList.remove('active'));el.classList.add('active');if(window.innerWidth<768)closeSidebar();}
+function setChildActive(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.nch').forEach(n=>n.classList.remove('active'));el.classList.add('active');}
+function toggleNC(id,btn){document.getElementById('nc-'+id).classList.toggle('open');btn.classList.toggle('open');}
+function toggleSidebar(){document.querySelector('.sb').classList.toggle('open');document.getElementById('sb-overlay').classList.toggle('open');}
+function closeSidebar(){document.querySelector('.sb').classList.remove('open');document.getElementById('sb-overlay').classList.remove('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m&&m.id!=='modal-code')m.classList.remove('open');});});
+let _tt;
+function showToast(msg,type='ok'){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+
+// ══════════════════════════════════════════════
+//  GLOBAL SEARCH
+// ══════════════════════════════════════════════
+function globalSearch(q){
+  const drop=document.getElementById('search-drop');
+  if(!q||q.length<2){drop.classList.remove('open');return;}
+  const results=patients.filter(p=>(p.name||'').toLowerCase().includes(q.toLowerCase())||(p.proto||'').toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  if(!results.length){
+    drop.innerHTML='<div class="sr-empty">Nenhum paciente encontrado</div>';
+    drop.classList.add('open');return;
+  }
+  const svcColor={Transfusão:'#2563eb',Pediátrica:'#d97706',Medicações:'#059669',Sangria:'#7c3aed'};
+  drop.innerHTML=results.map(raw=>{const p=escObj(raw);return`
+    <div class="sr-item" onclick="openHistorico('${p.id}')">
+      <div class="sr-item-av" style="background:${svcColor[raw.service]||'#64748b'}">${esc(raw.name[0])}</div>
+      <div style="flex:1;min-width:0">
+        <div class="sr-item-name">${p.name}</div>
+        <div class="sr-item-sub">${p.service} · ${p.turn} · ${p.proto}</div>
+      </div>
+      <span style="font-size:.58rem;color:var(--light)">${dmy(p.apptDate)}</span>
+    </div>`;}).join('');
+  drop.classList.add('open');
+}
+function closeGlobalSearch(){
+  document.getElementById('search-drop').classList.remove('open');
+  document.getElementById('global-search').value='';
+}
+
+// ══════════════════════════════════════════════
+//  HISTÓRICO DO PACIENTE
+// ══════════════════════════════════════════════
+const HIST_EMPTY='<div style="text-align:center;padding:40px;color:var(--light)">Busque um paciente pelo nome na barra lateral</div>';
+// Homônimos: mesmo nome só é a mesma pessoa se o nascimento não divergir.
+function samePatient(x,ref){
+  return(x.name||'').toLowerCase()===(ref.name||'').toLowerCase()&&(!x.dob||!ref.dob||x.dob===ref.dob);
+}
+function openHistorico(patientId){
+  closeGlobalSearch();
+  const p=patients.find(x=>x.id===patientId);
+  if(!p) return;
+  histRef={id:p.id,name:p.name,dob:p.dob};
+  renderHistorico();
+  showPage('historico');
+}
+function renderHistorico(){
+  const history=patients.filter(x=>samePatient(x,histRef))
+    .sort((a,b)=>(b.apptDate||'').localeCompare(a.apptDate||''));
+  const el=document.getElementById('hist-content');
+  const sub=document.getElementById('hist-page-sub');
+  if(!history.length){
+    histRef=null;
+    el.innerHTML=HIST_EMPTY;
+    if(sub)sub.textContent='Selecione um paciente para ver o histórico';
+    return;
+  }
+  const rawP=history.find(x=>x.id===histRef.id)||history[0];
+  histRef.id=rawP.id;
+  const p=escObj(rawP);
+  if(sub) sub.textContent=`${history.length} agendamento(s) encontrado(s)`;
+  const ok=history.filter(x=>x.status==='Confirmado').length;
+  const pend=history.filter(x=>x.status==='Pendente').length;
+  const ed=canEdit();
+  const phoneDisplay=p.phone?`<a href="tel:${esc(normPhone(rawP.phone))}" style="color:#fff;text-decoration:none">${p.phone}</a>`:'Sem telefone';
+  const whatsLink=p.phone?`<button class="whatsapp-btn" onclick="sendWhatsAppById('${p.id}')">💬 WhatsApp</button>`:
+    `<button class="whatsapp-btn" onclick="showToast('⚠️ Cadastre o telefone do paciente','warn')" style="background:#94a3b8">💬 Sem telefone</button>`;
+  const smsLink=p.phone?`<button class="sms-btn" onclick="sendSMSById('${p.id}')">📱 SMS</button>`:
+    `<button class="sms-btn" onclick="showToast('⚠️ Cadastre o telefone do paciente','warn')" style="background:#94a3b8">📱 SMS</button>`;
+
+  const timeline=history.map(raw=>{
+    const h=escObj(raw);
+    const cls=raw.status==='Pendente'?'pend':raw.status==='Cancelado'?'canc':'';
+    const isUpcoming=raw.apptDate&&raw.apptDate>=hoje()&&raw.status!=='Cancelado';
+    return`<div class="hist-item ${cls}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="hist-item-date">📅 ${dmy(h.apptDate)} ${isUpcoming?'<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-size:.6rem">Próximo</span>':''}</div>
+          <div class="hist-item-title">${h.service} · ${h.turn}</div>
+          <div class="hist-item-sub">⏰ ${h.time} · 🩸 ${h.blood||'—'} · Prot: ${h.proto}${h.extra?' · '+h.extra:''}</div>
+          ${h.obs?`<div class="hist-item-sub" style="margin-top:3px">📝 ${h.obs}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div class="hist-item-badge">${statusBadge(raw.status)}</div>
+          ${ed?`<button class="ficha-btn" onclick="openEdit('${h.id}')">✏️ Editar</button>`:''}
+          <button class="ficha-btn" onclick="printFicha('${h.id}')">🖨️ Ficha</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div class="hist-header">
+      <div class="hist-av">${esc(rawP.name[0])}</div>
+      <div style="flex:1;min-width:0">
+        <div class="hist-name">${p.name}</div>
+        <div class="hist-meta">📱 ${phoneDisplay} · 🩸 ${p.blood||'—'} · Nasc: ${dmy(p.dob)}</div>
+        <div class="hist-stats">
+          <div class="hist-stat"><div class="v">${history.length}</div><div class="l">Total</div></div>
+          <div class="hist-stat"><div class="v" style="color:#86efac">${ok}</div><div class="l">Confirm.</div></div>
+          <div class="hist-stat"><div class="v" style="color:#fde047">${pend}</div><div class="l">Pendente</div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          ${whatsLink}${smsLink}
+          ${ed?`<button class="whatsapp-btn" style="background:#f1f5f9;color:#374151" onclick="openAddPatient('${p.id}')">+ Novo Agend.</button>`:''}
+        </div>
+      </div>
+    </div>
+    <h3 style="font-size:.85rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;">LINHA DO TEMPO</h3>
+    <div class="hist-timeline">${timeline}</div>`;
+}
+
+// ══════════════════════════════════════════════
+//  WHATSAPP & SMS
+// ══════════════════════════════════════════════
+function contactablePatient(id){
+  const p=patients.find(x=>x.id===id);
+  if(!p){showToast('Paciente não encontrado','err');return null;}
+  if(!p.phone){showToast('⚠️ Paciente sem telefone cadastrado','warn');return null;}
+  if(![10,11].includes(normPhone(p.phone).length)){showToast('⚠️ Telefone do paciente é inválido: corrija o cadastro','warn');return null;}
+  if(p.status==='Cancelado'){showToast('⚠️ Agendamento cancelado: não envie confirmação','warn');return null;}
+  return p;
+}
+function sendWhatsAppById(id){
+  const p=contactablePatient(id);
+  if(!p)return;
+  const msg=encodeURIComponent(
+`Olá ${p.name}! 😊
+
+🩸 *Hemocentro de João Pessoa*
+Seu agendamento:
+
+📋 Serviço: *${p.service}*
+📅 Data: *${p.apptDate?dmy(p.apptDate):'A confirmar'}*
+⏰ Horário: *${p.time||'A confirmar'}*
+
+Por favor, chegue com 15 minutos de antecedência.
+Dúvidas: entre em contato conosco.
+
+✅ Responda SIM para confirmar ou NÃO para cancelar.`);
+  window.open(`https://wa.me/55${normPhone(p.phone)}?text=${msg}`,'_blank','noopener');
+  showToast('💬 Abrindo WhatsApp...','ok');
+}
+function sendSMSById(id){
+  const p=contactablePatient(id);
+  if(!p)return;
+  const msg=encodeURIComponent(`Hemocentro JP: Ola ${p.name}, seu agendamento de ${p.service} em ${p.apptDate?dmy(p.apptDate):'data a confirmar'} as ${p.time||'horario a confirmar'}. Qualquer duvida nos contate.`);
+  location.href=`sms:+55${normPhone(p.phone)}?body=${msg}`;
+}
+
+// ══════════════════════════════════════════════
+//  IMPRIMIR FICHA DO PACIENTE
+// ══════════════════════════════════════════════
+function printFicha(id){
+  const raw=patients.find(x=>x.id===id);
+  if(!raw) return;
+  const p=escObj(raw);
+  const d=new Date();
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+  <title>Ficha - ${p.name}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:24px;color:#111;max-width:600px;margin:0 auto;}
+    .header{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1e40af;padding-bottom:14px;margin-bottom:18px;}
+    .logo{width:52px;height:52px;background:linear-gradient(135deg,#1e40af,#7c3aed);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;text-align:center;line-height:52px;}
+    h1{color:#1e40af;font-size:16px;margin:0;}h2{font-size:12px;color:#64748b;margin:3px 0 0;font-weight:normal;}
+    .section{margin-bottom:14px;background:#f8fafc;border-radius:8px;padding:12px 14px;border-left:4px solid #1e40af;}
+    .section h3{font-size:11px;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+    .row{display:flex;justify-content:space-between;margin-bottom:5px;}
+    .lbl{font-size:11px;color:#64748b;}.val{font-size:11px;font-weight:700;}
+    .status-ok{background:#d1fae5;color:#065f46;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:700;}
+    .status-pend{background:#fef9c3;color:#854d0e;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:700;}
+    .status-canc{background:#fee2e2;color:#991b1b;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:700;}
+    .footer{margin-top:20px;border-top:1px solid #e2e8f0;padding-top:12px;font-size:10px;color:#94a3b8;display:flex;justify-content:space-between;}
+    .sign-area{border:1px dashed #cbd5e1;border-radius:8px;padding:16px 20px;margin-top:14px;text-align:center;font-size:10px;color:#94a3b8;}
+    @media print{body{padding:10px;}}
+  </style></head><body>
+  <div class="header">
+    <div class="logo">🩸</div>
+    <div><h1>Hemocentro de João Pessoa</h1><h2>Ficha de Agendamento — Sistema de Agendamentos</h2></div>
+  </div>
+  <div class="section"><h3>Dados do Paciente</h3>
+    <div class="row"><span class="lbl">Nome completo</span><span class="val">${p.name}</span></div>
+    <div class="row"><span class="lbl">Data de nascimento</span><span class="val">${p.dob?p.dob.split('-').reverse().join('/'):'—'}</span></div>
+    <div class="row"><span class="lbl">Tipo sanguíneo</span><span class="val">${p.blood||'—'}</span></div>
+    <div class="row"><span class="lbl">Telefone</span><span class="val">${p.phone||'—'}</span></div>
+  </div>
+  <div class="section" style="border-left-color:#7c3aed"><h3>Dados do Agendamento</h3>
+    <div class="row"><span class="lbl">Serviço</span><span class="val">${p.service}</span></div>
+    <div class="row"><span class="lbl">Data do agendamento</span><span class="val">${p.apptDate?p.apptDate.split('-').reverse().join('/'):'—'}</span></div>
+    <div class="row"><span class="lbl">Turno</span><span class="val">${p.turn}</span></div>
+    <div class="row"><span class="lbl">Horário</span><span class="val">${p.time}</span></div>
+    <div class="row"><span class="lbl">Gênero</span><span class="val">${p.gender||'—'}</span></div>
+    ${p.extra?`<div class="row"><span class="lbl">Info adicional</span><span class="val">${p.extra}</span></div>`:''}
+    ${p.obs?`<div class="row"><span class="lbl">Observações</span><span class="val">${p.obs}</span></div>`:''}
+    <div class="row"><span class="lbl">Protocolo</span><span class="val">${p.proto}</span></div>
+    <div class="row"><span class="lbl">Status</span><span class="${p.status==='Confirmado'?'status-ok':p.status==='Cancelado'?'status-canc':'status-pend'}">${p.status}</span></div>
+  </div>
+  <div class="sign-area">Assinatura do responsável: _______________________________</div>
+  <div class="footer"><span>Gerado em ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} às ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span><span>Hemocentro João Pessoa — ${p.proto}</span></div>
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+  const w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else showToast('⚠️ Permita pop-ups para imprimir ficha','warn');
+}
+
+// ══════════════════════════════════════════════
+//  ALERTAS / NOTIFICAÇÕES
+// ══════════════════════════════════════════════
+let notifications=[];
+const notifDismissed=new Set(); // o título inclui as contagens: se mudar, o aviso volta
+function activeNotifs(){return notifications.filter(n=>!notifDismissed.has(n.title));}
+function buildNotifications(){
+  notifications=[];
+  const today=hoje();
+  const tmr=new Date();tmr.setDate(tmr.getDate()+1);
+  const tomorrow=todayStr(tmr);
+  // Vagas lotadas (hoje)
+  const keys=[
+    {k:'T.fmanha',l:'Transfusão Fem. Manhã'},{k:'T.ftarde',l:'Transfusão Fem. Tarde'},
+    {k:'T.mmanha',l:'Transfusão Masc. Manhã'},{k:'T.mtarde',l:'Transfusão Masc. Tarde'},
+    {k:'P.manha',l:'Pediátrica Manhã'},{k:'P.tarde',l:'Pediátrica Tarde'},
+    {k:'M.manha',l:'Medicações Manhã'},{k:'M.tarde',l:'Medicações Tarde'},
+    {k:'S.fmanha',l:'Sangria Fem. Manhã'},{k:'S.ftarde',l:'Sangria Fem. Tarde'},
+    {k:'S.mmanha',l:'Sangria Masc. Manhã'},{k:'S.mtarde',l:'Sangria Masc. Tarde'},
+  ];
+  keys.forEach(({k,l})=>{
+    const used=getUsed(k,today), max=getMax(k);
+    if(max>0&&used>=max) notifications.push({type:'danger',ico:'🚨',title:`${l} LOTADO hoje (${used}/${max})`,sub:`${used}/${max} vagas ocupadas`,time:'Hoje'});
+    else if(max>0&&used>0&&used>=max*0.8) notifications.push({type:'warn',ico:'⚠️',title:`${l} quase lotado hoje (${used}/${max})`,sub:`${used}/${max} vagas — restam ${max-used}`,time:'Hoje'});
+  });
+  // Pendentes de hoje
+  const todayPend=patients.filter(p=>p.status==='Pendente'&&effDate(p)===today);
+  if(todayPend.length>0) notifications.push({type:'warn',ico:'⏳',title:`${todayPend.length} agendamento(s) pendente(s) hoje`,sub:todayPend.slice(0,3).map(p=>p.name).join(', ')+(todayPend.length>3?'...':''),time:'Hoje'});
+  // Agendamentos amanhã
+  const tomPats=patients.filter(p=>p.apptDate===tomorrow&&p.status!=='Cancelado');
+  if(tomPats.length>0) notifications.push({type:'info',ico:'📅',title:`${tomPats.length} agendamento(s) amanhã`,sub:tomPats.slice(0,3).map(p=>p.name).join(', ')+(tomPats.length>3?'...':''),time:'Amanhã'});
+  // Sem telefone (só agendamentos ainda por vir)
+  const semTel=patients.filter(p=>!p.phone&&p.status!=='Cancelado'&&effDate(p)>=today);
+  if(semTel.length>0) notifications.push({type:'info',ico:'📱',title:`${semTel.length} agendamento(s) futuro(s) sem telefone`,sub:'Cadastre para enviar confirmações',time:''});
+  updateNotifBadge();
+}
+function updateNotifBadge(){
+  const n=activeNotifs().length;
+  const nb=document.getElementById('n-badge');
+  const ab=document.getElementById('alert-count-badge');
+  if(nb){nb.textContent=n;nb.style.display=n>0?'inline':'none';}
+  if(ab){ab.textContent=n;ab.style.display=n>0?'inline':'none';}
+}
+function toggleNotifPanel(){
+  const p=document.getElementById('notif-panel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')) renderNotifPanel();
+}
+function renderNotifPanel(){
+  buildNotifications();
+  const list=document.getElementById('notif-list');
+  const items=activeNotifs();
+  if(!items.length){list.innerHTML='<div class="notif-empty">✅ Nenhuma notificação</div>';return;}
+  list.innerHTML=items.map(n=>`
+    <div class="notif-item unread">
+      <div class="alert-ico ${n.type}">${n.ico}</div>
+      <div style="flex:1;min-width:0">
+        <div class="notif-title2">${esc(n.title)}</div>
+        <div class="notif-sub2">${esc(n.sub)}</div>
+      </div>
+      <div class="alert-time">${n.time}</div>
+    </div>`).join('');
+}
+function clearNotifs(){
+  notifications.forEach(n=>notifDismissed.add(n.title));
+  renderNotifPanel();
+  document.getElementById('notif-panel').classList.remove('open');
+}
+function renderAlerts(){
+  buildNotifications();
+  const el=document.getElementById('alerts-content');
+  if(!notifications.length){
+    el.innerHTML='<div class="alerts-panel"><div style="padding:32px;text-align:center;color:var(--light);font-size:.88rem;">✅ Tudo em ordem! Nenhum alerta no momento.</div></div>';
+    return;
+  }
+  el.innerHTML=`<div class="alerts-panel">
+    <div class="alerts-hdr"><h3>🔔 ${notifications.length} alerta(s) ativo(s)</h3></div>
+    ${notifications.map(n=>`
+    <div class="alert-item">
+      <div class="alert-ico ${n.type}">${n.ico}</div>
+      <div style="flex:1;min-width:0">
+        <div class="alert-title">${esc(n.title)}</div>
+        <div class="alert-sub">${esc(n.sub)}</div>
+      </div>
+      <div class="alert-time">${n.time}</div>
+    </div>`).join('')}
+  </div>`;
+}
+// Close notif panel on outside click
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('notif-panel');
+  const btn=document.getElementById('notif-btn');
+  if(panel&&btn&&!panel.contains(e.target)&&!btn.contains(e.target)) panel.classList.remove('open');
+});
+
+// ══════════════════════════════════════════════
+//  PWA INSTALL
+// ══════════════════════════════════════════════
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  const btn=document.getElementById('btn-install');
+  if(btn){btn.style.display='flex';btn.title='Instalar App no dispositivo';}
+});
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r=>{
+      if(r.outcome==='accepted'){
+        showToast('✅ App instalado com sucesso!','ok');
+        document.getElementById('btn-install').style.display='none';
+      }
+      deferredPrompt=null;
+    });
+  } else {
+    showToast('📲 Para instalar: menu do navegador → "Adicionar à tela inicial"','ok');
+  }
+}
+window.addEventListener('appinstalled',()=>{
+  showToast('✅ Hemocentro JP instalado!','ok');
+  const btn=document.getElementById('btn-install');
+  if(btn) btn.style.display='none';
+});
+
+// ══════════════════════════════════════════════
+//  CONEXÃO / SERVICE WORKER
+// ══════════════════════════════════════════════
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&curUser){updatePageDate();syncNow();}
+});
+window.addEventListener('online',()=>{setConn(true);syncNow();});
+window.addEventListener('offline',()=>setConn(false));
+document.getElementById('hist-content').innerHTML=HIST_EMPTY;
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.warn('Service worker não registrado',e));
+  });
+}
+</script>
+</body>
+</html>
