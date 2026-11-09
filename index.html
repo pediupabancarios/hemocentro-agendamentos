@@ -778,10 +778,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <input type="date" id="m-appt-date" style="margin-top:6px;width:100%;padding:10px 12px;border:1.5px solid #bfdbfe;border-radius:9px;font-family:inherit;font-size:.9rem;font-weight:700;color:#1e40af;background:#fff;outline:none;"/>
       <div style="font-size:.67rem;color:#64748b;margin-top:5px;">💡 Pode agendar para qualquer data futura</div>
     </div>
-    <div class="mrow">
-      <div class="mfg"><label>Nome Completo</label><input type="text" id="m-name" placeholder="Nome do paciente"/></div>
-      <div class="mfg"><label>Data de Nasc.</label><input type="date" id="m-dob"/></div>
-    </div>
+    <div class="mfg"><label>Nome Completo</label><input type="text" id="m-name" placeholder="Nome do paciente"/></div>
     <div class="mrow">
       <div class="mfg"><label>Serviço</label><select id="m-svc" onchange="updModal()"><option value="Transfusão">Transfusão</option><option value="Pediátrica">Pediátrica</option><option value="Medicações">Medicações</option><option value="Sangria">Sangria</option></select></div>
       <div class="mfg"><label>Turno</label><select id="m-turn"><option value="Manhã">Manhã (07h–12h)</option><option value="Tarde">Tarde (12h–18h)</option></select></div>
@@ -1566,7 +1563,7 @@ function openAddPatient(prefillId){
   if(denyEdit())return;
   editId=null;
   document.getElementById('m-title').textContent='Inserir Paciente';
-  ['m-name','m-dob','m-time','m-extra','m-phone','m-obs'].forEach(id=>document.getElementById(id).value='');
+  ['m-name','m-time','m-extra','m-phone','m-obs'].forEach(id=>document.getElementById(id).value='');
   // Agenda no dia aberto no dashboard; nunca sugere data passada
   const vd=todayStr(viewDate);
   document.getElementById('m-appt-date').value=vd>hoje()?vd:hoje();
@@ -1578,7 +1575,6 @@ function openAddPatient(prefillId){
   const src=typeof prefillId==='string'?patients.find(x=>x.id===prefillId):null;
   if(src){
     document.getElementById('m-name').value=src.name||'';
-    document.getElementById('m-dob').value=src.dob||'';
     document.getElementById('m-phone').value=src.phone||'';
     document.getElementById('m-blood').value=src.blood||'';
     if(src.gender)document.getElementById('m-gender').value=src.gender;
@@ -1592,7 +1588,6 @@ function openEdit(id){
   editId=id;
   document.getElementById('m-title').textContent='Editar Agendamento';
   document.getElementById('m-name').value=p.name||'';
-  document.getElementById('m-dob').value=p.dob||'';
   document.getElementById('m-appt-date').value=p.apptDate||hoje();
   document.getElementById('m-phone').value=p.phone||'';
   document.getElementById('m-obs').value=p.obs||'';
@@ -1625,7 +1620,6 @@ async function savePat(){
   const name=document.getElementById('m-name').value.trim();
   const time=document.getElementById('m-time').value;
   const apptDate=document.getElementById('m-appt-date').value;
-  const dob=document.getElementById('m-dob').value;
   const service=document.getElementById('m-svc').value;
   const turn=document.getElementById('m-turn').value;
   const status=document.getElementById('m-status').value;
@@ -1636,11 +1630,11 @@ async function savePat(){
   if(!time){showToast('⚠️ Informe o horário','warn');return;}
   const[tIni,tFim]=turn==='Manhã'?['07:00','12:00']:['12:00','18:00'];
   if(time<tIni||time>tFim){showToast(`⚠️ Horário fora do turno da ${turn} (${tIni}–${tFim})`,'warn');return;}
-  if(dob&&dob>hoje()){showToast('⚠️ Data de nascimento no futuro','warn');return;}
   if(phone&&![10,11].includes(normPhone(phone).length)){showToast('⚠️ Telefone inválido: informe DDD e número','warn');return;}
   const old=editId?patients.find(x=>x.id===editId):null;
   const data={
-    name,time,dob,apptDate,service,turn,status,phone,
+    // O formulário não pede mais nascimento; na edição, preserva o que já existia.
+    name,time,dob:old?.dob||'',apptDate,service,turn,status,phone,
     gender:service==='Pediátrica'?'':document.getElementById('m-gender').value,
     blood:document.getElementById('m-blood').value,
     extra:showsExtra?document.getElementById('m-extra').value.trim():'',
@@ -1944,7 +1938,7 @@ function renderHistorico(){
       <div class="hist-av">${esc(rawP.name[0])}</div>
       <div style="flex:1;min-width:0">
         <div class="hist-name">${p.name}</div>
-        <div class="hist-meta">📱 ${phoneDisplay} · 🩸 ${p.blood||'—'} · Nasc: ${dmy(p.dob)}</div>
+        <div class="hist-meta">📱 ${phoneDisplay} · 🩸 ${p.blood||'—'}${p.dob?` · Nasc: ${dmy(p.dob)}`:''}</div>
         <div class="hist-stats">
           <div class="hist-stat"><div class="v">${history.length}</div><div class="l">Total</div></div>
           <div class="hist-stat"><div class="v" style="color:#86efac">${ok}</div><div class="l">Confirm.</div></div>
@@ -2030,7 +2024,7 @@ function printFicha(id){
   </div>
   <div class="section"><h3>Dados do Paciente</h3>
     <div class="row"><span class="lbl">Nome completo</span><span class="val">${p.name}</span></div>
-    <div class="row"><span class="lbl">Data de nascimento</span><span class="val">${p.dob?p.dob.split('-').reverse().join('/'):'—'}</span></div>
+    ${p.dob?`<div class="row"><span class="lbl">Data de nascimento</span><span class="val">${dmy(p.dob)}</span></div>`:''}
     <div class="row"><span class="lbl">Tipo sanguíneo</span><span class="val">${p.blood||'—'}</span></div>
     <div class="row"><span class="lbl">Telefone</span><span class="val">${p.phone||'—'}</span></div>
   </div>
