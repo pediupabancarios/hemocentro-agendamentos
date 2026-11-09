@@ -463,6 +463,21 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 #conn-bar.show{display:block;}
 .code-box{background:#f1f5f9;border:1.5px dashed #94a3b8;border-radius:12px;padding:16px;text-align:center;font-family:ui-monospace,Menlo,monospace;font-size:1.15rem;font-weight:700;letter-spacing:.04em;word-break:break-all;user-select:all;}
 .code-note{font-size:.74rem;color:var(--muted);line-height:1.55;margin-top:12px;}
+.bcomp{font-size:.59rem;padding:3px 8px;border-radius:20px;background:#dbeafe;color:#1e40af;font-weight:700;white-space:nowrap;flex-shrink:0;border:1px solid #bfdbfe;}
+.bfalt{font-size:.59rem;padding:3px 8px;border-radius:20px;background:#ffedd5;color:#9a3412;font-weight:700;white-space:nowrap;flex-shrink:0;border:1px solid #fed7aa;}
+.closed-banner{display:flex;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:10px;padding:9px 12px;font-size:.78rem;font-weight:700;margin-bottom:10px;}
+.cd.closed .cn{color:#cbd5e1;text-decoration:line-through;}
+.cd.closed.blk{background:#fef2f2;}
+.dias-grid{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px 4px;}
+.dia-chk{display:flex;align-items:center;gap:5px;padding:7px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:.76rem;font-weight:700;cursor:pointer;background:#f8fafc;}
+.dia-chk input{accent-color:var(--T);}
+.blq-form{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;}
+.blq-form input{padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.8rem;background:#f8fafc;}
+.blq-form input[type=text]{flex:1;min-width:140px;}
+.blq-list{padding:0 16px 14px;}
+.blq-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:.78rem;}
+.blq-item:last-child{border-bottom:none;}
+@media(max-width:767px){.blq-form input{font-size:16px;}}
 /* ══ FILTRO DO DASHBOARD ══ */
 .filter-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;}
 .filter-banner button{background:#fff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
@@ -652,7 +667,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         <div class="search-bar">
           <input type="text" id="srch" placeholder="🔍 Buscar por nome ou protocolo..." oninput="renderPTable()"/>
           <select id="f-svc" onchange="renderPTable()"><option value="">Todos Serviços</option><option>Transfusão</option><option>Pediátrica</option><option>Medicações</option><option>Sangria</option></select>
-          <select id="f-st" onchange="renderPTable()"><option value="">Todos Status</option><option>Confirmado</option><option>Pendente</option><option>Cancelado</option></select>
+          <select id="f-st" onchange="renderPTable()"><option value="">Todos Status</option><option>Confirmado</option><option>Pendente</option><option>Compareceu</option><option>Faltou</option><option>Cancelado</option></select>
         </div>
         <div class="ptable-wrap">
           <table class="ptable">
@@ -731,6 +746,18 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         </div>
       </div>
       <div class="cap-card">
+        <div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#fee2e2,#fef2f2)">📆</div><div><h3>Dias de atendimento</h3><p>Fora destes dias, só o gestor agenda (como encaixe)</p></div></div>
+        <div class="dias-grid" id="dias-grid"></div>
+        <div class="backup-actions" style="padding-top:8px"><button class="btn-rel primary" onclick="saveDias()">✅ Salvar dias</button></div>
+        <div style="font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:6px 16px 0">Feriados e datas bloqueadas</div>
+        <div class="blq-form">
+          <input type="date" id="blq-data"/>
+          <input type="text" id="blq-motivo" placeholder="Motivo (ex: Feriado municipal)" maxlength="100"/>
+          <button class="btn-rel" onclick="addBloqueio()">+ Bloquear</button>
+        </div>
+        <div class="blq-list" id="blq-list"></div>
+      </div>
+      <div class="cap-card">
         <div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#e2e8f0,#f8fafc)">💾</div><div><h3>Backup dos dados</h3><p>Cópia de segurança dos agendamentos</p></div></div>
         <div class="backup-actions">
           <button class="btn-rel primary" onclick="exportBackup()">📤 Exportar backup</button>
@@ -789,7 +816,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
     <div class="mrow">
       <div class="mfg"><label>Tipo Sanguíneo</label><select id="m-blood"><option value="">Não informado</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
-      <div class="mfg"><label>Status</label><select id="m-status"><option value="Confirmado">Confirmado</option><option value="Pendente">Pendente</option><option value="Cancelado">Cancelado</option></select></div>
+      <div class="mfg"><label>Status</label><select id="m-status"><option value="Confirmado">Confirmado</option><option value="Pendente">Pendente</option><option value="Compareceu">Compareceu</option><option value="Faltou">Faltou</option><option value="Cancelado">Cancelado</option></select></div>
     </div>
     <div class="mfg" id="m-extra-w" style="display:none"><label id="m-extra-l">Info</label><input type="text" id="m-extra" placeholder=""/></div>
     <div class="mrow">
@@ -870,6 +897,17 @@ let curUser=null, editId=null, delId=null, editUId=null;
 let viewDate = new Date(); // Date currently shown in dashboard
 let calY=new Date().getFullYear(), calM=new Date().getMonth();
 let dashFilter=null, histRef=null, capsDraft=null, busy=false;
+let diasSemana=[0,1,2,3,4,5,6], bloqueios=new Map();
+// Ocupam vaga. Cancelado e Faltou liberam.
+const ATIVOS=['Confirmado','Pendente','Compareceu'];
+function isActive(p){return ATIVOS.includes(p.status);}
+const DIAS_CURTOS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+// Motivo de não haver atendimento na data (AAAA-MM-DD), ou null.
+function dayClosed(ds){
+  if(bloqueios.has(ds))return bloqueios.get(ds)||'Data bloqueada';
+  const dow=new Date(ds+'T12:00').getDay();
+  return diasSemana.includes(dow)?null:'Sem atendimento neste dia da semana';
+}
 
 // ── Conversão linha do banco ⇄ objeto usado nas telas ──
 function fromRow(r){
@@ -884,6 +922,7 @@ function userFromRow(r){return{id:r.usuario,user:r.usuario,name:r.nome,role:r.pa
 // Mensagem legível para erros do servidor.
 function dbMsg(e){
   const m=String(e?.message||e||'');
+  if(m.startsWith('FECHADO:'))return`Não há atendimento nesse dia: ${m.slice(8)}. A agenda foi atualizada.`;
   if(m.startsWith('LOTADO:')){const[,u,x]=m.split(':');return`Este turno lotou nesse dia (${u}/${x} vagas). A agenda foi atualizada.`;}
   if(!navigator.onLine||/fetch|network/i.test(m))return'Sem conexão com o servidor. Nada foi salvo.';
   if(/JWT|token/i.test(m))return'Sua sessão expirou. Entre novamente.';
@@ -903,9 +942,12 @@ async function fetchPatients(){
   return out;
 }
 async function loadData(){
-  const[p,v]=await Promise.all([fetchPatients(),sb.from('ag_vagas').select('caps').eq('id',1).single()]);
+  const[p,v,b]=await Promise.all([fetchPatients(),sb.from('ag_vagas').select('*').eq('id',1).single(),sb.from('ag_bloqueios').select('*').order('data')]);
   if(v.error)throw v.error;
   patients=p;caps=normalizeCaps(v.data.caps);
+  diasSemana=Array.isArray(v.data.dias_semana)?v.data.dias_semana:[0,1,2,3,4,5,6];
+  if(b.error)console.warn('Bloqueios indisponíveis',b.error);
+  else bloqueios=new Map(b.data.map(x=>[x.data,x.motivo||'']));
 }
 async function loadUsers(){
   if(!isGestor())return;
@@ -927,6 +969,7 @@ function startSync(){
   syncChannel=sb.channel('ag-sync')
     .on('postgres_changes',{event:'*',schema:'public',table:'ag_agendamentos'},queueSync)
     .on('postgres_changes',{event:'*',schema:'public',table:'ag_vagas'},queueSync)
+    .on('postgres_changes',{event:'*',schema:'public',table:'ag_bloqueios'},queueSync)
     .subscribe();
   syncInterval=setInterval(syncNow,60000); // rede de segurança se o tempo real cair
 }
@@ -1092,11 +1135,11 @@ function getKey(p){
 }
 function getMax(k){const[s,v]=k.split('.');return caps[s]?.[v]??0;}
 // As vagas são por dia: conta só os agendamentos da data informada (padrão: dia aberto no dashboard).
-function getUsed(k,ds=todayStr(viewDate)){return patients.filter(p=>effDate(p)===ds&&getKey(p)===k&&p.status!=='Cancelado').length;}
+function getUsed(k,ds=todayStr(viewDate)){return patients.filter(p=>effDate(p)===ds&&getKey(p)===k&&isActive(p)).length;}
 function hoje(){return todayStr(new Date());}
 function effDate(p){return p.apptDate||hoje();} // registros antigos sem data contam como hoje
 function byDateTime(a,b){return(effDate(a)+(a.time||'')).localeCompare(effDate(b)+(b.time||''));}
-function statusBadge(st){return st==='Confirmado'?'<span class="bk">Confirmado</span>':st==='Pendente'?'<span class="bv">Pendente</span>':'<span class="bc">Cancelado</span>';}
+function statusBadge(st){return({Confirmado:'<span class="bk">Confirmado</span>',Pendente:'<span class="bv">Pendente</span>',Compareceu:'<span class="bcomp">Compareceu</span>',Faltou:'<span class="bfalt">Faltou</span>'})[st]||'<span class="bc">Cancelado</span>';}
 function dmy(d){return d?d.split('-').reverse().join('/'):'—';}
 
 // ══════════════════════════════════════════════
@@ -1151,12 +1194,14 @@ function renderDashboard(){
 
 function periodBlock(turn,maxKey,list,showExtra){
   const cls=turn==='Manhã'?'ma':'ta',em=turn==='Manhã'?'🌅':'🌆',rng=turn==='Manhã'?'07H–12H':'12H–18H';
-  const max=getMax(maxKey),used=list.filter(p=>p.status!=='Cancelado').length;
+  const max=getMax(maxKey),used=list.filter(isActive).length;
   let rows=list.sort(byDateTime).map(raw=>{
     const p=escObj(raw);
     const badge=statusBadge(raw.status);
     const extra=showExtra&&p.extra?` · ${p.extra}`:p.blood?` · ${p.blood}`:'';
-    const acts=canEdit()?`<div class="row-actions"><button class="rbtn" onclick="openEdit('${p.id}')">✏️</button><button class="rbtn del" onclick="openDel('${p.id}')">🗑️</button></div>`:'';
+    const marcar=canEdit()&&['Confirmado','Pendente'].includes(raw.status)&&effDate(raw)<=hoje()
+      ?`<button class="rbtn" title="Compareceu" onclick="markStatus('${p.id}','Compareceu')">✅</button><button class="rbtn" title="Faltou" onclick="markStatus('${p.id}','Faltou')">🚫</button>`:'';
+    const acts=canEdit()?`<div class="row-actions">${marcar}<button class="rbtn" onclick="openEdit('${p.id}')">✏️</button><button class="rbtn del" onclick="openDel('${p.id}')">🗑️</button></div>`:'';
     return`<div class="ar"><span class="at2">${p.time}</span><div class="ai"><div class="an">${p.name}</div><div class="ap">Prot: ${p.proto}${extra}</div></div>${badge}${acts}</div>`;
   }).join('');
   for(let i=0;i<Math.min(Math.max(0,max-used),2);i++)rows+=`<div class="ar" style="opacity:.3"><span class="at2">—</span><div class="ai"><div class="an" style="font-style:italic;color:var(--light)">Vaga disponível</div></div><span class="bv">Aberta</span></div>`;
@@ -1183,6 +1228,8 @@ function renderApptList(){
   const turns=f?.turn?[f.turn]:['Manhã','Tarde'];
   const genders=f?.gender?[f.gender]:['Feminino','Masculino'];
   let html='';
+  const fechado=dayClosed(todayStr(viewDate));
+  if(fechado)html+=`<div class="closed-banner">🚫 Sem atendimento neste dia: ${esc(fechado)}</div>`;
   if(f)html+=`<div class="filter-banner"><span>Mostrando: ${[f.svc,f.gender,f.turn].filter(Boolean).join(' · ')}</span><button onclick="clearDashFilter();showPage('dashboard')">Ver todos os serviços</button></div>`;
   svcs.forEach(s=>{
     html+=`<span class="slbl3" style="color:${s.color}">${s.label}</span>`;
@@ -1215,7 +1262,7 @@ function renderSummary(){
   ];
   let html='',tu=0,tm=0;
   const dayP=patientsForDate(viewDate);
-  const getUsedDay=(key)=>dayP.filter(p=>getKey(p)===key&&p.status!=='Cancelado').length;
+  const getUsedDay=(key)=>dayP.filter(p=>getKey(p)===key&&isActive(p)).length;
   ss.forEach(s=>{
     const u=s.keys.reduce((a,k)=>a+getUsedDay(k),0),m=s.keys.reduce((a,k)=>a+getMax(k),0);
     tu+=u;tm+=m;
@@ -1256,9 +1303,11 @@ function buildCalendar(yr,mo,sel){
   for(let d=1;d<=days;d++){
     const c=document.createElement('div');
     const isSelDate=yr===viewDate.getFullYear()&&mo===viewDate.getMonth()&&d===viewDate.getDate();
-    c.className='cd'+(isCur&&d===t.getDate()?' tod2':'')+(isSelDate&&!(isCur&&d===t.getDate())?' sel':'');
     const dayKey=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayHasPats=patients.filter(p=>effDate(p)===dayKey&&p.status!=='Cancelado');
+    const fechado=dayClosed(dayKey);
+    c.className='cd'+(isCur&&d===t.getDate()?' tod2':'')+(isSelDate&&!(isCur&&d===t.getDate())?' sel':'')+(fechado?' closed':'')+(bloqueios.has(dayKey)?' blk':'');
+    if(fechado)c.title=fechado;
+    const dayHasPats=patients.filter(p=>effDate(p)===dayKey&&isActive(p));
     const dots=[{s:'Transfusão',k:'T'},{s:'Pediátrica',k:'P'},{s:'Medicações',k:'M'},{s:'Sangria',k:'S'}]
       .filter(x=>dayHasPats.some(p=>p.service===x.s))
       .map(x=>`<div class="cdot" style="background:var(--${x.k})"></div>`).join('');
@@ -1318,31 +1367,36 @@ function relPatients(){
 function renderRelatorio(){
   const[ini,fim]=relRange();
   const list=relPatients();
-  const dias=Math.round((new Date(fim+'T12:00')-new Date(ini+'T12:00'))/86400000)+1;
+  // Só conta os dias com atendimento
+  let dias=0;
+  for(let d=new Date(ini+'T12:00');todayStr(d)<=fim;d.setDate(d.getDate()+1))if(!dayClosed(todayStr(d)))dias++;
   const total=list.length;
-  const ok=list.filter(p=>p.status==='Confirmado').length;
-  const pend=list.filter(p=>p.status==='Pendente').length;
-  const canc=list.filter(p=>p.status==='Cancelado').length;
+  const cnt=st=>list.filter(p=>p.status===st).length;
+  const ok=cnt('Confirmado'),pend=cnt('Pendente'),canc=cnt('Cancelado'),comp=cnt('Compareceu'),falt=cnt('Faltou');
+  const abs=comp+falt?Math.round(falt/(comp+falt)*100)+'%':'—';
   const svcs=[
     {l:'Transfusão',keys:['T.fmanha','T.ftarde','T.mmanha','T.mtarde'],c:'#2563eb'},
     {l:'Pediátrica',keys:['P.manha','P.tarde'],c:'#d97706'},
     {l:'Medicações',keys:['M.manha','M.tarde'],c:'#059669'},
     {l:'Sangria',   keys:['S.fmanha','S.ftarde','S.mmanha','S.mtarde'],c:'#7c3aed'},
   ];
-  const usedOf=k=>list.filter(p=>getKey(p)===k&&p.status!=='Cancelado').length;
-  // A capacidade cadastrada é por dia; no período multiplica pelos dias corridos.
+  const usedOf=k=>list.filter(p=>getKey(p)===k&&isActive(p)).length;
+  // A capacidade cadastrada é por dia; no período multiplica pelos dias de atendimento.
   const totalMax=svcs.reduce((a,s)=>a+s.keys.reduce((b,k)=>b+getMax(k),0),0)*dias;
 
-  document.getElementById('rel-period').textContent=ini===fim?`Dia ${dmy(ini)}`:`${dmy(ini)} a ${dmy(fim)} (${dias} dias corridos)`;
+  document.getElementById('rel-period').textContent=ini===fim?`Dia ${dmy(ini)}`:`${dmy(ini)} a ${dmy(fim)} (${dias} dia(s) de atendimento)`;
 
   // Stat grid
   document.getElementById('rel-stat-grid').innerHTML=[
     {v:total,l:'Total Agendamentos',c:'#0f172a'},
     {v:ok,l:'Confirmados',c:'#059669'},
     {v:pend,l:'Pendentes',c:'#d97706'},
+    {v:comp,l:'Compareceram',c:'#1e40af'},
+    {v:falt,l:'Faltaram',c:'#9a3412'},
+    {v:abs,l:'Taxa de Faltas',c:'#9a3412'},
     {v:canc,l:'Cancelados',c:'#dc2626'},
     {v:totalMax,l:'Vagas no Período',c:'#2563eb'},
-    {v:Math.max(0,totalMax-ok-pend),l:'Vagas Livres',c:'#64748b'},
+    {v:Math.max(0,totalMax-ok-pend-comp),l:'Vagas Livres',c:'#64748b'},
   ].map(s=>`<div class="stat-box"><div class="val" style="color:${s.c}">${s.v}</div><div class="lbl">${s.l}</div></div>`).join('');
 
   // Progress por serviço
@@ -1354,7 +1408,7 @@ function renderRelatorio(){
 
   // Status table
   const stData=[
-    {s:'Confirmado',cls:'bk',svcs:{}},{s:'Pendente',cls:'bv',svcs:{}},{s:'Cancelado',cls:'bc',svcs:{}},
+    {s:'Confirmado',cls:'bk',svcs:{}},{s:'Pendente',cls:'bv',svcs:{}},{s:'Compareceu',cls:'bcomp',svcs:{}},{s:'Faltou',cls:'bfalt',svcs:{}},{s:'Cancelado',cls:'bc',svcs:{}},
   ];
   list.forEach(p=>{ const st=stData.find(x=>x.s===p.status); if(st){st.svcs[p.service]=(st.svcs[p.service]||0)+1;} });
   document.getElementById('rel-status-body').innerHTML=stData.map(d=>{
@@ -1446,7 +1500,9 @@ function exportPDF(){
     <div class="stat"><div class="v">${total}</div><div class="l">Total</div></div>
     <div class="stat"><div class="v" style="color:#059669">${ok}</div><div class="l">Confirmados</div></div>
     <div class="stat"><div class="v" style="color:#d97706">${pend}</div><div class="l">Pendentes</div></div>
-    <div class="stat"><div class="v" style="color:#dc2626">${total-ok-pend}</div><div class="l">Cancelados</div></div>
+    <div class="stat"><div class="v" style="color:#1e40af">${relList.filter(p=>p.status==='Compareceu').length}</div><div class="l">Compareceram</div></div>
+    <div class="stat"><div class="v" style="color:#9a3412">${relList.filter(p=>p.status==='Faltou').length}</div><div class="l">Faltaram</div></div>
+    <div class="stat"><div class="v" style="color:#dc2626">${relList.filter(p=>p.status==='Cancelado').length}</div><div class="l">Cancelados</div></div>
   </div>
   <table><thead><tr><th>#</th><th>Data</th><th>Hora</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Tipo Sang.</th><th>Info</th><th>Status</th></tr></thead>
   <tbody>${rows}</tbody></table>
@@ -1464,6 +1520,7 @@ function exportPDF(){
 function renderMgmt(){
   capsDraft=JSON.parse(JSON.stringify(caps)); // "+/−" só valem depois de Aplicar
   renderLegacyBox();
+  renderDias();
   mkCC('cap-T',[{l:'Feminino Manhã',k:'fmanha'},{l:'Feminino Tarde',k:'ftarde'},{l:'Masculino Manhã',k:'mmanha'},{l:'Masculino Tarde',k:'mtarde'}],'T');
   mkCC('cap-P',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'P');
   mkCC('cap-M',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'M');
@@ -1503,7 +1560,7 @@ function toImportRow(p,i){
     data:isDate(p.apptDate)?p.apptDate:hoje(),horario:p.time,servico:p.service,turno:p.turn,
     genero:['Feminino','Masculino'].includes(p.gender)?p.gender:'',
     tipo_sanguineo:['A+','A-','B+','B-','AB+','AB-','O+','O-'].includes(p.blood)?p.blood:'',
-    status:['Confirmado','Pendente','Cancelado'].includes(p.status)?p.status:'Pendente',
+    status:['Confirmado','Pendente','Cancelado','Compareceu','Faltou'].includes(p.status)?p.status:'Pendente',
     info:p.extra||'',telefone:p.phone||'',obs:p.obs||'',criado_por:p.createdBy||null,
   };
 }
@@ -1642,15 +1699,21 @@ async function savePat(){
     encaixe:!!old?.encaixe,
   };
   // Aviso rápido. Quem decide de verdade é o banco, que evita duas reservas na mesma vaga.
-  const slotChanged=!old||old.apptDate!==apptDate||old.service!==service||old.turn!==turn||old.gender!==data.gender||old.status==='Cancelado';
-  if(status!=='Cancelado'&&slotChanged){
+  // Mesma regra do banco: marcar Compareceu/Faltou não reabre a checagem.
+  const slotChanged=!old||old.apptDate!==apptDate||old.service!==service||old.turn!==turn||old.gender!==data.gender
+    ||(['Cancelado','Faltou'].includes(old.status)&&['Confirmado','Pendente'].includes(status));
+  if(ATIVOS.includes(status)&&slotChanged){
     const k=getKey(data),max=getMax(k);
-    const used=patients.filter(p=>p.id!==editId&&effDate(p)===apptDate&&getKey(p)===k&&p.status!=='Cancelado').length;
+    const used=patients.filter(p=>p.id!==editId&&effDate(p)===apptDate&&getKey(p)===k&&isActive(p)).length;
     data.encaixe=false;
-    if(used>=max){
-      const msg=`${service} · ${turn} em ${dmy(apptDate)} está lotado (${used}/${max}).`;
+    const fechado=dayClosed(apptDate);
+    const motivos=[];
+    if(fechado)motivos.push(`Não há atendimento em ${dmy(apptDate)}: ${fechado}.`);
+    if(used>=max)motivos.push(`${service} · ${turn} em ${dmy(apptDate)} está lotado (${used}/${max}).`);
+    if(motivos.length){
+      const msg=motivos.join(' ');
       if(!isGestor()){showToast(`⚠️ ${msg} Fale com o gestor.`,'warn');return;}
-      if(!confirm(`${msg}\n\nAutorizar encaixe acima do limite?`))return;
+      if(!confirm(`${msg}\n\nAutorizar como encaixe?`))return;
       data.encaixe=true;
     }
   }
@@ -1660,7 +1723,7 @@ async function savePat(){
     const{data:rows,error}=await q.select();
     if(error){
       showToast(`❌ ${dbMsg(error)}`,'err');
-      if(String(error.message).startsWith('LOTADO:'))syncNow();
+      if(/^(LOTADO|FECHADO):/.test(String(error.message)))syncNow();
       return;
     }
     if(!rows?.length){showToast('❌ O registro não foi salvo: ele foi removido ou seu perfil não tem permissão','err');syncNow();return;}
@@ -1680,6 +1743,57 @@ function openDel(id){
   document.getElementById('del-name').textContent=p.name;
   document.getElementById('del-info').textContent=`${p.service} · ${p.turn} · ${p.time} · ${p.proto}`;
   document.getElementById('modal-del').classList.add('open');
+}
+async function markStatus(id,st){
+  if(denyEdit()||busy)return;
+  busy=true;
+  try{
+    const{data,error}=await sb.from('ag_agendamentos').update({status:st}).eq('id',id).select();
+    if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
+    if(!data?.length){showToast('❌ Não foi possível marcar: o registro foi removido ou seu perfil não tem permissão','err');syncNow();return;}
+    const saved=fromRow(data[0]);
+    patients=patients.map(x=>x.id===id?saved:x);
+    showToast(st==='Compareceu'?'✅ Comparecimento registrado':'🚫 Falta registrada','ok');
+    refreshViews();
+  }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');}
+  finally{busy=false;}
+}
+function renderDias(){
+  document.getElementById('dias-grid').innerHTML=DIAS_CURTOS.map((n,i)=>
+    `<label class="dia-chk"><input type="checkbox" id="dia-${i}" ${diasSemana.includes(i)?'checked':''}/>${n}</label>`).join('');
+  const hojeS=hoje();
+  const futuros=[...bloqueios.entries()].filter(([d])=>d>=hojeS).sort(([a],[b])=>a.localeCompare(b));
+  document.getElementById('blq-list').innerHTML=futuros.length?futuros.map(([d,m])=>
+    `<div class="blq-item"><span><strong>${dmy(d)}</strong> · ${DIAS_CURTOS[new Date(d+'T12:00').getDay()]}${m?' · '+esc(m):''}</span><button class="tbl-act del" title="Desbloquear" onclick="delBloqueio('${d}')">🗑️</button></div>`).join('')
+    :'<div style="font-size:.74rem;color:var(--light);padding:6px 0">Nenhuma data bloqueada daqui para frente</div>';
+}
+async function saveDias(){
+  if(!isGestor())return;
+  const sel=DIAS_CURTOS.map((_,i)=>i).filter(i=>document.getElementById('dia-'+i).checked);
+  if(!sel.length){showToast('⚠️ Marque ao menos um dia de atendimento','warn');return;}
+  const{data,error}=await sb.from('ag_vagas').update({dias_semana:sel}).eq('id',1).select();
+  if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Sem permissão para alterar os dias'}`,'err');return;}
+  diasSemana=data[0].dias_semana;
+  renderDias();renderDashboard();showToast('✅ Dias de atendimento salvos','ok');
+}
+async function addBloqueio(){
+  if(!isGestor())return;
+  const d=document.getElementById('blq-data').value,m=document.getElementById('blq-motivo').value.trim();
+  if(!d){showToast('⚠️ Escolha a data','warn');return;}
+  if(d<hoje()){showToast('⚠️ Escolha uma data de hoje em diante','warn');return;}
+  const{data,error}=await sb.from('ag_bloqueios').upsert({data:d,motivo:m,criado_por:curUser.name}).select();
+  if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Sem permissão para bloquear datas'}`,'err');return;}
+  bloqueios.set(d,m);
+  document.getElementById('blq-data').value='';document.getElementById('blq-motivo').value='';
+  const ja=patients.filter(p=>effDate(p)===d&&isActive(p)).length;
+  renderDias();renderDashboard();
+  showToast(ja?`⚠️ Data bloqueada, mas já há ${ja} agendamento(s) nela: remarque ou cancele`:'✅ Data bloqueada',ja?'warn':'ok');
+}
+async function delBloqueio(d){
+  if(!isGestor())return;
+  const{data,error}=await sb.from('ag_bloqueios').delete().eq('data',d).select();
+  if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Não foi possível desbloquear'}`,'err');return;}
+  bloqueios.delete(d);renderDias();renderDashboard();showToast('✅ Data desbloqueada','ok');
 }
 async function confirmDel(){
   if(denyEdit()||busy)return;
@@ -1914,8 +2028,8 @@ function renderHistorico(){
 
   const timeline=history.map(raw=>{
     const h=escObj(raw);
-    const cls=raw.status==='Pendente'?'pend':raw.status==='Cancelado'?'canc':'';
-    const isUpcoming=raw.apptDate&&raw.apptDate>=hoje()&&raw.status!=='Cancelado';
+    const cls=raw.status==='Pendente'?'pend':['Cancelado','Faltou'].includes(raw.status)?'canc':'';
+    const isUpcoming=raw.apptDate&&raw.apptDate>=hoje()&&isActive(raw);
     return`<div class="hist-item ${cls}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
@@ -1962,7 +2076,7 @@ function contactablePatient(id){
   if(!p){showToast('Paciente não encontrado','err');return null;}
   if(!p.phone){showToast('⚠️ Paciente sem telefone cadastrado','warn');return null;}
   if(![10,11].includes(normPhone(p.phone).length)){showToast('⚠️ Telefone do paciente é inválido: corrija o cadastro','warn');return null;}
-  if(p.status==='Cancelado'){showToast('⚠️ Agendamento cancelado: não envie confirmação','warn');return null;}
+  if(!['Confirmado','Pendente'].includes(p.status)){showToast(`⚠️ Agendamento ${p.status.toLowerCase()}: não envie confirmação`,'warn');return null;}
   return p;
 }
 function sendWhatsAppById(id){
@@ -2037,7 +2151,7 @@ function printFicha(id){
     ${p.extra?`<div class="row"><span class="lbl">Info adicional</span><span class="val">${p.extra}</span></div>`:''}
     ${p.obs?`<div class="row"><span class="lbl">Observações</span><span class="val">${p.obs}</span></div>`:''}
     <div class="row"><span class="lbl">Protocolo</span><span class="val">${p.proto}</span></div>
-    <div class="row"><span class="lbl">Status</span><span class="${p.status==='Confirmado'?'status-ok':p.status==='Cancelado'?'status-canc':'status-pend'}">${p.status}</span></div>
+    <div class="row"><span class="lbl">Status</span><span class="${['Confirmado','Compareceu'].includes(p.status)?'status-ok':['Cancelado','Faltou'].includes(p.status)?'status-canc':'status-pend'}">${p.status}</span></div>
   </div>
   <div class="sign-area">Assinatura do responsável: _______________________________</div>
   <div class="footer"><span>Gerado em ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} às ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span><span>Hemocentro João Pessoa — ${p.proto}</span></div>
@@ -2073,14 +2187,17 @@ function buildNotifications(){
     if(max>0&&used>=max) notifications.push({type:'danger',ico:'🚨',title:`${l} LOTADO hoje (${used}/${max})`,sub:`${used}/${max} vagas ocupadas`,time:'Hoje'});
     else if(max>0&&used>0&&used>=max*0.8) notifications.push({type:'warn',ico:'⚠️',title:`${l} quase lotado hoje (${used}/${max})`,sub:`${used}/${max} vagas — restam ${max-used}`,time:'Hoje'});
   });
+  // Agendamentos em dias sem atendimento
+  const emFechado=patients.filter(p=>isActive(p)&&effDate(p)>=today&&!p.encaixe&&dayClosed(effDate(p)));
+  if(emFechado.length) notifications.push({type:'danger',ico:'📆',title:`${emFechado.length} agendamento(s) em dia sem atendimento`,sub:emFechado.slice(0,3).map(p=>`${p.name} (${dmy(p.apptDate)})`).join(', ')+(emFechado.length>3?'...':''),time:''});
   // Pendentes de hoje
   const todayPend=patients.filter(p=>p.status==='Pendente'&&effDate(p)===today);
   if(todayPend.length>0) notifications.push({type:'warn',ico:'⏳',title:`${todayPend.length} agendamento(s) pendente(s) hoje`,sub:todayPend.slice(0,3).map(p=>p.name).join(', ')+(todayPend.length>3?'...':''),time:'Hoje'});
   // Agendamentos amanhã
-  const tomPats=patients.filter(p=>p.apptDate===tomorrow&&p.status!=='Cancelado');
+  const tomPats=patients.filter(p=>p.apptDate===tomorrow&&isActive(p));
   if(tomPats.length>0) notifications.push({type:'info',ico:'📅',title:`${tomPats.length} agendamento(s) amanhã`,sub:tomPats.slice(0,3).map(p=>p.name).join(', ')+(tomPats.length>3?'...':''),time:'Amanhã'});
   // Sem telefone (só agendamentos ainda por vir)
-  const semTel=patients.filter(p=>!p.phone&&p.status!=='Cancelado'&&effDate(p)>=today);
+  const semTel=patients.filter(p=>!p.phone&&isActive(p)&&effDate(p)>=today);
   if(semTel.length>0) notifications.push({type:'info',ico:'📱',title:`${semTel.length} agendamento(s) futuro(s) sem telefone`,sub:'Cadastre para enviar confirmações',time:''});
   updateNotifBadge();
 }
