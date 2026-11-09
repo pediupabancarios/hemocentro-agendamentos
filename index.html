@@ -858,6 +858,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         <div class="pac-hint" id="m-pac-hint" style="display:none">Este agendamento ainda não tem cadastro: escolha o paciente ou cadastre-o.</div>
       </div>
     </div>
+    <div class="mfg" id="m-tel-w" style="display:none"><label>📱 Celular (WhatsApp)</label><input type="tel" id="m-phone" placeholder="(83) 9 9999-9999" autocomplete="off"/></div>
     <div class="mrow">
       <div class="mfg"><label>Serviço</label><select id="m-svc" onchange="updModal()"><option value="Transfusão">Transfusão</option><option value="Pediátrica">Pediátrica</option><option value="Medicações">Medicações</option><option value="Sangria">Sangria</option></select></div>
       <div class="mfg"><label>Turno</label><select id="m-turn" onchange="updSerie()"><option value="Manhã">Manhã (07h–12h)</option><option value="Tarde">Tarde (12h–18h)</option></select></div>
@@ -1813,6 +1814,9 @@ function setSelPac(p){
   selPac=p||null;
   const sel=G('m-pac-sel'),bw=G('m-pac-busca-w');
   G('m-pac-drop').classList.remove('open');
+  // O celular é do cadastro: aparece com o paciente escolhido e, se mudar, atualiza o cadastro ao salvar.
+  G('m-tel-w').style.display=selPac?'block':'none';
+  G('m-phone').value=selPac?.phone||'';
   if(!selPac){sel.style.display='none';bw.style.display='block';G('m-pac-busca').value='';return;}
   sel.innerHTML=`<div style="flex:1;min-width:0"><div class="pn">${esc(selPac.nome)}</div><div class="ap">${esc(docLabel(selPac))} · 📱 ${esc(selPac.phone||'sem telefone')} · 🩸 ${esc(selPac.blood||'—')}</div></div>`
     +`<button type="button" class="ficha-btn" onclick="openPacModal(selPac.id,true)">✏️ Cadastro</button><button type="button" class="ficha-btn" onclick="setSelPac(null);G('m-pac-busca').focus()">Trocar</button>`;
@@ -1989,6 +1993,16 @@ async function savePat(){
   const status=document.getElementById('m-status').value;
   const showsExtra=service==='Medicações'||service==='Pediátrica';
   if(!selPac){showToast('⚠️ Escolha o paciente na busca ou cadastre um novo','warn');G('m-pac-busca').focus();return;}
+  const novoTel=G('m-phone').value.trim();
+  if(novoTel&&![10,11].includes(normPhone(novoTel).length)){showToast('⚠️ Celular inválido: informe DDD e número','warn');G('m-phone').focus();return;}
+  if(novoTel!==(selPac.phone||'')){
+    // Atualiza o cadastro primeiro: o banco copia o telefone do cadastro para o agendamento.
+    const{data:pc,error:pe}=await sb.from('ag_pacientes').update({telefone:novoTel}).eq('id',selPac.id).select();
+    if(pe||!pc?.length){showToast(`❌ Não foi possível salvar o celular: ${pe?dbMsg(pe):'sem permissão'}`,'err');return;}
+    const atualizado=pacFromRow(pc[0]);
+    pacientes=pacientes.map(x=>x.id===atualizado.id?atualizado:x);
+    selPac=atualizado;
+  }
   if(!apptDate){showToast('⚠️ Informe a data do agendamento','warn');return;}
   const old=editId?patients.find(x=>x.id===editId):null;
   const data={
