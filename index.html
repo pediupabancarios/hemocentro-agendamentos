@@ -782,6 +782,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
           <strong id="legacy-text"></strong>
           <div style="margin-top:8px"><button class="btn-rel" onclick="sendLegacy()">☁️ Enviar para o banco</button></div>
         </div>
+        <div style="font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:4px 16px 0;display:flex;justify-content:space-between;align-items:center;gap:8px">Cópias no servidor <button class="btn-rel" style="padding:6px 10px;font-size:.72rem" onclick="backupNow()">☁️ Fazer agora</button></div>
+        <div class="blq-list" id="bk-list"><div style="font-size:.74rem;color:var(--light);padding:6px 0">Carregando…</div></div>
+        <p class="backup-note">O servidor faz uma cópia automática todo dia às 06:00 e guarda as últimas 30. Baixe uma de vez em quando para ter uma cópia fora do servidor.</p>
         <p class="backup-note">O arquivo contém dados de pacientes (LGPD): guarde em local seguro. Importar acrescenta os registros que faltam, sem apagar nem alterar os que já existem.</p>
       </div>
     </div>
@@ -1595,6 +1598,7 @@ function renderMgmt(){
   capsDraft=JSON.parse(JSON.stringify(caps)); // "+/−" só valem depois de Aplicar
   renderLegacyBox();
   renderDias();
+  loadBackups();
   mkCC('cap-T',[{l:'Feminino Manhã',k:'fmanha'},{l:'Feminino Tarde',k:'ftarde'},{l:'Masculino Manhã',k:'mmanha'},{l:'Masculino Tarde',k:'mtarde'}],'T');
   mkCC('cap-P',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'P');
   mkCC('cap-M',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'M');
@@ -1613,6 +1617,37 @@ async function saveCaps(){
   if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Sem permissão para alterar vagas'}`,'err');return;}
   caps=normalizeCaps(data[0].caps);
   renderMgmt();renderDashboard();showToast('✅ Vagas salvas!','ok');
+}
+
+// ── Backups no servidor ──
+async function loadBackups(){
+  const el=G('bk-list');
+  if(!el||!isGestor())return;
+  let data,error;
+  try{({data,error}=await sb.from('ag_backups').select('id,criado_em,tipo,criado_por,resumo').order('criado_em',{ascending:false}).limit(10));}
+  catch(e){error=e;}
+  if(error){el.innerHTML=`<div style="font-size:.74rem;color:var(--danger);padding:6px 0">Não foi possível listar: ${esc(dbMsg(error))}</div>`;return;}
+  if(!data.length){el.innerHTML='<div style="font-size:.74rem;color:var(--light);padding:6px 0">Nenhuma cópia ainda. A primeira automática sai às 06:00.</div>';return;}
+  const fmt=t=>{const d=new Date(t);return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+  el.innerHTML=data.map(b=>`<div class="blq-item"><span><strong>${fmt(b.criado_em)}</strong> · ${b.tipo==='auto'?'automática':'manual'+(b.criado_por?' ('+esc(b.criado_por)+')':'')}<br><span style="color:var(--muted);font-size:.7rem">${+b.resumo?.agendamentos||0} agendamento(s) · ${+b.resumo?.pacientes||0} paciente(s)</span></span><button class="tbl-act" title="Baixar esta cópia" onclick="downloadBackup(${+b.id})">⬇️</button></div>`).join('');
+}
+async function backupNow(){
+  if(!isGestor()||busy)return;
+  busy=true;
+  try{
+    const{error}=await sb.rpc('ag_backup_manual');
+    if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
+    showToast('✅ Cópia feita no servidor','ok');
+  }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');}
+  finally{busy=false;}
+  loadBackups();
+}
+async function downloadBackup(id){
+  if(!isGestor())return;
+  const{data,error}=await sb.from('ag_backups').select('criado_em,dados').eq('id',id).single();
+  if(error||!data){showToast(`❌ ${error?dbMsg(error):'Cópia não encontrada'}`,'err');return;}
+  downloadFile(JSON.stringify({app:'hemocentro-agendamentos',origem:'servidor',criado_em:data.criado_em,...data.dados},null,2),'application/json',`hemocentro_backup_servidor_${String(data.criado_em).slice(0,10)}_${id}.json`);
+  showToast('⬇️ Cópia baixada. Guarde em local seguro (LGPD).','ok');
 }
 
 // ── Backup ──
@@ -1654,6 +1689,7 @@ async function importBackup(input){
   if(!file||!isGestor())return;
   let d;
   try{d=JSON.parse(await file.text());}catch(e){showToast('❌ Arquivo inválido: não é um JSON','err');return;}
+  if(d&&!Array.isArray(d.patients)&&Array.isArray(d.agendamentos))d.patients=d.agendamentos.map(fromRow);
   if(!d||!Array.isArray(d.patients)){showToast('❌ Arquivo não é um backup válido deste sistema','err');return;}
   if(!confirm(`Acrescentar ao banco os registros deste backup (${d.patients.length} agendamento(s))?\n\nO que já existe não é alterado. As vagas não mudam.`))return;
   try{

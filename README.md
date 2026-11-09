@@ -11,6 +11,7 @@ Agendamento de transfusão, transfusão pediátrica, medicações e sangria tera
 - `supabase/003_trava_vagas.sql` — ajuste da trava de reservas simultâneas
 - `supabase/004_dias_e_comparecimento.sql` — dias de atendimento, datas bloqueadas e status Compareceu/Faltou
 - `supabase/005_pacientes_e_series.sql` — cadastro único de pacientes e agendamentos em série
+- `supabase/006_backup_automatico.sql` — cópia diária no servidor e função de restauração
 
 Não precisa de compilação. Qualquer hospedagem estática com HTTPS serve (GitHub Pages, Netlify).
 
@@ -27,6 +28,7 @@ Supabase `ohuaoncwgioawgptyqgz`, compartilhado com outros apps. Este usa só as 
 | `ag_usuarios` | Quem tem acesso e com qual perfil |
 | `ag_codigos` | Códigos de primeiro acesso (só o hash; ninguém lê pela API) |
 | `ag_historico` | Quem mudou o quê, com o antes e o depois de cada registro |
+| `ag_backups` | Cópias completas das tabelas `ag_*` (só o gestor lê) |
 
 Sem login não se lê nem se grava nada. A agenda se atualiza sozinha nas outras telas e é preciso internet para usar.
 
@@ -66,8 +68,14 @@ Depois do envio completo, ele oferece apagar a cópia local. Quem tiver um arqui
 
 ## Backup
 
-O plano gratuito do Supabase não faz backup automático. Exporte com frequência em **Painel do Gestor → Backup dos dados**.
-O arquivo contém dados de pacientes (LGPD). Registro apagado por engano pode ser recuperado de `ag_historico`.
+- **Automático:** todo dia às 06:00 (horário de João Pessoa) o banco copia agendamentos, pacientes, vagas, feriados
+  e usuários para `ag_backups` (job `ag-backup-diario` do `pg_cron`). Ficam as 30 últimas cópias automáticas.
+- **Manual:** Painel do Gestor → Backup dos dados → **☁️ Fazer agora**. As cópias manuais não são apagadas sozinhas.
+- **Fora do servidor:** baixe uma cópia (⬇️) de vez em quando; se o projeto Supabase for perdido, as cópias internas vão junto.
+  O arquivo contém dados de pacientes (LGPD).
+- **Restaurar:** só por SQL, como administrador: `select public.ag_restaurar_backup(<id>, 'RESTAURAR');`.
+  Substitui agendamentos, pacientes, feriados, vagas e dias; não mexe em usuários. Antes, guarda uma cópia do estado atual.
+- Um registro apagado por engano também pode ser recuperado de `ag_historico`.
 
 ## Testar localmente
 
