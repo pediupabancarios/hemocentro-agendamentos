@@ -697,7 +697,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         </div>
         <div class="ptable-wrap">
           <table class="ptable">
-            <thead><tr><th>Data</th><th>Hora</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Info</th><th>Status</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Data</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Info</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody id="ptable-body"></tbody>
           </table>
         </div>
@@ -751,7 +751,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         <h3>📝 Lista Completa de Agendamentos</h3>
         <div class="ptable-wrap">
           <table class="rel-table" id="rel-full-table">
-            <thead><tr><th>#</th><th>Data</th><th>Hora</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Tipo Sang.</th><th>Info</th><th>Status</th></tr></thead>
+            <thead><tr><th>#</th><th>Data</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Tipo Sang.</th><th>Info</th><th>Status</th></tr></thead>
             <tbody id="rel-full-body"></tbody>
           </table>
         </div>
@@ -863,10 +863,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <div class="mfg"><label>Turno</label><select id="m-turn" onchange="updSerie()"><option value="Manhã">Manhã (07h–12h)</option><option value="Tarde">Tarde (12h–18h)</option></select></div>
     </div>
     <div class="mrow">
-      <div class="mfg"><label>Horário</label><input type="time" id="m-time" min="07:00" max="18:00"/></div>
       <div class="mfg" id="m-g-grp"><label>Gênero</label><select id="m-gender" onchange="updSerie()"><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select></div>
-    </div>
-    <div class="mrow">
       <div class="mfg"><label>Status</label><select id="m-status"><option value="Confirmado">Confirmado</option><option value="Pendente">Pendente</option><option value="Compareceu">Compareceu</option><option value="Faltou">Faltou</option><option value="Cancelado">Cancelado</option></select></div>
     </div>
     <div class="mfg" id="m-extra-w" style="display:none"><label id="m-extra-l">Info</label><input type="text" id="m-extra" placeholder=""/></div>
@@ -1014,7 +1011,7 @@ function fromRow(r){
     pacienteId:r.paciente_id||'',serieId:r.serie_id||''};
 }
 function toRow(p){
-  return{nome:p.name,nascimento:p.dob||null,data:p.apptDate,horario:p.time,servico:p.service,turno:p.turn,genero:p.gender||'',
+  return{nome:p.name,nascimento:p.dob||null,data:p.apptDate,horario:p.time||null,servico:p.service,turno:p.turn,genero:p.gender||'',
     tipo_sanguineo:p.blood||'',status:p.status,info:p.extra||'',telefone:p.phone||'',obs:p.obs||'',encaixe:!!p.encaixe,
     paciente_id:p.pacienteId||null,serie_id:p.serieId||null};
 }
@@ -1246,7 +1243,11 @@ function getMax(k){const[s,v]=k.split('.');return caps[s]?.[v]??0;}
 function getUsed(k,ds=todayStr(viewDate)){return patients.filter(p=>effDate(p)===ds&&getKey(p)===k&&isActive(p)).length;}
 function hoje(){return todayStr(new Date());}
 function effDate(p){return p.apptDate||hoje();} // registros antigos sem data contam como hoje
-function byDateTime(a,b){return(effDate(a)+(a.time||'')).localeCompare(effDate(b)+(b.time||''));}
+// Data, depois turno (Manhã antes da Tarde), depois ordem de agendamento (protocolo).
+function ordemAg(p){return effDate(p)+(p.turn==='Tarde'?'1':'0')+(p.time||'')+String(p.proto||'').padStart(12,'0');}
+function byDateTime(a,b){return ordemAg(a).localeCompare(ordemAg(b));}
+const TURNO_HORAS={Manhã:'07h–12h',Tarde:'12h–18h'};
+function turnoTxt(p){return p.turn?`${p.turn} (${TURNO_HORAS[p.turn]||''})`:'—';}
 function statusBadge(st){return({Confirmado:'<span class="bk">Confirmado</span>',Pendente:'<span class="bv">Pendente</span>',Compareceu:'<span class="bcomp">Compareceu</span>',Faltou:'<span class="bfalt">Faltou</span>'})[st]||'<span class="bc">Cancelado</span>';}
 function dmy(d){return d?d.split('-').reverse().join('/'):'—';}
 
@@ -1303,14 +1304,14 @@ function renderDashboard(){
 function periodBlock(turn,maxKey,list,showExtra){
   const cls=turn==='Manhã'?'ma':'ta',em=turn==='Manhã'?'🌅':'🌆',rng=turn==='Manhã'?'07H–12H':'12H–18H';
   const max=getMax(maxKey),used=list.filter(isActive).length;
-  let rows=list.sort(byDateTime).map(raw=>{
+  let rows=list.sort(byDateTime).map((raw,idx)=>{
     const p=escObj(raw);
     const badge=statusBadge(raw.status);
     const extra=showExtra&&p.extra?` · ${p.extra}`:p.blood?` · ${p.blood}`:'';
     const marcar=canEdit()&&['Confirmado','Pendente'].includes(raw.status)&&effDate(raw)<=hoje()
       ?`<button class="rbtn" title="Compareceu" onclick="markStatus('${p.id}','Compareceu')">✅</button><button class="rbtn" title="Faltou" onclick="markStatus('${p.id}','Faltou')">🚫</button>`:'';
     const acts=canEdit()?`<div class="row-actions">${marcar}<button class="rbtn" onclick="openEdit('${p.id}')">✏️</button><button class="rbtn del" onclick="openDel('${p.id}')">🗑️</button></div>`:'';
-    return`<div class="ar"><span class="at2">${p.time}</span><div class="ai"><div class="an">${p.name}</div><div class="ap">Prot: ${p.proto}${extra}${raw.serieId?' · 🔁':''}</div></div>${badge}${acts}</div>`;
+    return`<div class="ar"><span class="at2" title="Ordem no turno">${idx+1}º</span><div class="ai"><div class="an">${p.name}</div><div class="ap">Prot: ${p.proto}${extra}${raw.serieId?' · 🔁':''}</div></div>${badge}${acts}</div>`;
   }).join('');
   for(let i=0;i<Math.min(Math.max(0,max-used),2);i++)rows+=`<div class="ar" style="opacity:.3"><span class="at2">—</span><div class="ai"><div class="an" style="font-style:italic;color:var(--light)">Vaga disponível</div></div><span class="bv">Aberta</span></div>`;
   return`<div class="pblock"><div class="phdr2 ${cls}">${em} ${turn.toUpperCase()} · ${rng} · <strong>${used}/${max}</strong></div><div class="pbody">${rows}</div></div>`;
@@ -1442,13 +1443,13 @@ function renderPTable(){
   ).sort(byDateTime);
   const tm={Transfusão:'st-t',Pediátrica:'st-p',Medicações:'st-m',Sangria:'st-s'};
   const tb=document.getElementById('ptable-body');
-  if(!list.length){tb.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--light)">Nenhum paciente encontrado</td></tr>`;return;}
+  if(!list.length){tb.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--light)">Nenhum paciente encontrado</td></tr>`;return;}
   const ed=canEdit();
   tb.innerHTML=list.map(raw=>{
     const p=escObj(raw);
     const editBtn=ed?`<button class="tbl-act" onclick="openEdit('${p.id}')" title="Editar">✏️</button>`:'';
     const delBtn=ed?`<button class="tbl-act del" onclick="openDel('${p.id}')" title="Excluir">🗑️</button>`:'';
-    return`<tr><td style="font-size:.72rem;color:var(--muted);white-space:nowrap">${dmy(p.apptDate)}</td><td>${p.time}</td><td><div class="td-name" style="cursor:pointer;color:var(--T)" onclick="openHistorico('${p.id}')">${p.name}</div></td><td class="td-proto">${p.proto||'—'}</td><td><span class="stag ${tm[raw.service]||''}">${p.service}</span></td><td>${p.turn}</td><td>${p.gender||'—'}</td><td style="font-size:.69rem;color:var(--muted)">${p.blood||''}${p.extra?' · '+p.extra:''}</td><td>${statusBadge(raw.status)}</td><td><div style="display:flex;gap:3px;flex-wrap:wrap">${editBtn}<button class="tbl-act" onclick="openHistorico('${p.id}')" title="Histórico">📋</button><button class="tbl-act" onclick="sendWhatsAppById('${p.id}')" title="WhatsApp" style="color:#25D366">💬</button><button class="tbl-act" onclick="printFicha('${p.id}')" title="Ficha">🖨️</button>${delBtn}</div></td></tr>`;
+    return`<tr><td style="font-size:.72rem;color:var(--muted);white-space:nowrap">${dmy(p.apptDate)}</td><td><div class="td-name" style="cursor:pointer;color:var(--T)" onclick="openHistorico('${p.id}')">${p.name}</div></td><td class="td-proto">${p.proto||'—'}</td><td><span class="stag ${tm[raw.service]||''}">${p.service}</span></td><td>${p.turn}</td><td>${p.gender||'—'}</td><td style="font-size:.69rem;color:var(--muted)">${p.blood||''}${p.extra?' · '+p.extra:''}</td><td>${statusBadge(raw.status)}</td><td><div style="display:flex;gap:3px;flex-wrap:wrap">${editBtn}<button class="tbl-act" onclick="openHistorico('${p.id}')" title="Histórico">📋</button><button class="tbl-act" onclick="sendWhatsAppById('${p.id}')" title="WhatsApp" style="color:#25D366">💬</button><button class="tbl-act" onclick="printFicha('${p.id}')" title="Ficha">🖨️</button>${delBtn}</div></td></tr>`;
   }).join('');
 }
 
@@ -1532,8 +1533,8 @@ function renderRelatorio(){
   const tm={Transfusão:'st-t',Pediátrica:'st-p',Medicações:'st-m',Sangria:'st-s'};
   document.getElementById('rel-full-body').innerHTML=list.length?list.map((raw,i)=>{
     const p=escObj(raw);
-    return`<tr><td style="color:var(--muted);font-size:.7rem">${i+1}</td><td style="white-space:nowrap">${dmy(p.apptDate)}</td><td>${p.time}</td><td style="font-weight:700">${p.name}</td><td style="font-size:.7rem;color:var(--muted)">${p.proto}</td><td><span class="stag ${tm[raw.service]||''}">${p.service}</span></td><td>${p.turn}</td><td>${p.gender||'—'}</td><td>${p.blood||'—'}</td><td style="font-size:.7rem;color:var(--muted)">${p.extra||'—'}</td><td>${statusBadge(raw.status)}</td></tr>`;
-  }).join(''):`<tr><td colspan="11" style="text-align:center;padding:22px;color:var(--light)">Nenhum agendamento no período</td></tr>`;
+    return`<tr><td style="color:var(--muted);font-size:.7rem">${i+1}</td><td style="white-space:nowrap">${dmy(p.apptDate)}</td><td style="font-weight:700">${p.name}</td><td style="font-size:.7rem;color:var(--muted)">${p.proto}</td><td><span class="stag ${tm[raw.service]||''}">${p.service}</span></td><td>${p.turn}</td><td>${p.gender||'—'}</td><td>${p.blood||'—'}</td><td style="font-size:.7rem;color:var(--muted)">${p.extra||'—'}</td><td>${statusBadge(raw.status)}</td></tr>`;
+  }).join(''):`<tr><td colspan="10" style="text-align:center;padding:22px;color:var(--light)">Nenhum agendamento no período</td></tr>`;
 }
 
 function printRelatorio(){
@@ -1558,9 +1559,9 @@ function downloadFile(content,type,filename){
 function exportCSV(){
   const list=relPatients();
   if(!list.length){showToast('⚠️ Nenhum agendamento no período','warn');return;}
-  const header=['Data','Horário','Nome','CPF','Cartão SUS','Nascimento','Protocolo','Serviço','Turno','Gênero','Tipo Sanguíneo','Info Extra','Telefone','Observações','Status'];
+  const header=['Data','Nome','CPF','Cartão SUS','Nascimento','Protocolo','Serviço','Turno','Gênero','Tipo Sanguíneo','Info Extra','Telefone','Observações','Status'];
   const rows=list.map(p=>[
-    p.apptDate?dmy(p.apptDate):'',p.time,p.name,fmtCpf(pacById(p.pacienteId)?.cpf||''),fmtCns(pacById(p.pacienteId)?.cns||''),p.dob?dmy(p.dob):'',p.proto,p.service,p.turn,p.gender,p.blood,p.extra,p.phone,p.obs,p.status
+    p.apptDate?dmy(p.apptDate):'',p.name,fmtCpf(pacById(p.pacienteId)?.cpf||''),fmtCns(pacById(p.pacienteId)?.cns||''),p.dob?dmy(p.dob):'',p.proto,p.service,p.turn,p.gender,p.blood,p.extra,p.phone,p.obs,p.status
   ].map(csvCell).join(';'));
   const[ini,fim]=relRange();
   downloadFile('\ufeff'+[header.join(';'),...rows].join('\r\n'),'text/csv;charset=utf-8',`hemocentro_agendamentos_${ini}_a_${fim}.csv`);
@@ -1577,7 +1578,7 @@ function exportPDF(){
   const dataStr=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
   const rows=relList.map((raw,i)=>{const p=escObj(raw);return`
     <tr>
-      <td>${i+1}</td><td>${dmy(p.apptDate)}</td><td>${p.time}</td><td><strong>${p.name}</strong></td>
+      <td>${i+1}</td><td>${dmy(p.apptDate)}</td><td><strong>${p.name}</strong></td>
       <td>${p.proto}</td><td>${p.service}</td><td>${p.turn}</td>
       <td>${p.gender||'—'}</td><td>${p.blood||'—'}</td>
       <td>${p.extra||'—'}</td><td>${p.status}</td>
@@ -1614,7 +1615,7 @@ function exportPDF(){
     <div class="stat"><div class="v" style="color:#9a3412">${relList.filter(p=>p.status==='Faltou').length}</div><div class="l">Faltaram</div></div>
     <div class="stat"><div class="v" style="color:#dc2626">${relList.filter(p=>p.status==='Cancelado').length}</div><div class="l">Cancelados</div></div>
   </div>
-  <table><thead><tr><th>#</th><th>Data</th><th>Hora</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Tipo Sang.</th><th>Info</th><th>Status</th></tr></thead>
+  <table><thead><tr><th>#</th><th>Data</th><th>Paciente</th><th>Protocolo</th><th>Serviço</th><th>Turno</th><th>Gênero</th><th>Tipo Sang.</th><th>Info</th><th>Status</th></tr></thead>
   <tbody>${rows}</tbody></table>
   <p style="margin-top:16px;font-size:10px;color:#94a3b8;">Hemocentro de João Pessoa — Sistema de Agendamentos — ${dataStr}</p>
   <script>window.onload=()=>window.print();<\/script>
@@ -1694,12 +1695,11 @@ function exportBackup(){
 function toImportRow(p,i){
   if(!p||typeof p!=='object'||!String(p.name||'').trim())return null;
   if(!['Transfusão','Pediátrica','Medicações','Sangria'].includes(p.service)||!['Manhã','Tarde'].includes(p.turn))return null;
-  if(!/^[0-2]\d:[0-5]\d$/.test(p.time||''))return null;
   const isDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'');
   return{
     id:/^[A-Za-z0-9_-]+$/.test(String(p.id))?String(p.id):`imp${Date.now()}_${i}`,
     proto:p.proto||null,nome:String(p.name).trim(),nascimento:isDate(p.dob)?p.dob:null,
-    data:isDate(p.apptDate)?p.apptDate:hoje(),horario:p.time,servico:p.service,turno:p.turn,
+    data:isDate(p.apptDate)?p.apptDate:hoje(),horario:/^[0-2]\d:[0-5]\d$/.test(p.time||'')?p.time:null,servico:p.service,turno:p.turn,
     genero:['Feminino','Masculino'].includes(p.gender)?p.gender:'',
     tipo_sanguineo:['A+','A-','B+','B-','AB+','AB-','O+','O-'].includes(p.blood)?p.blood:'',
     status:['Confirmado','Pendente','Cancelado','Compareceu','Faltou'].includes(p.status)?p.status:'Pendente',
@@ -1763,7 +1763,7 @@ function openAddPatient(prefillId){
   if(denyEdit())return;
   editId=null;
   document.getElementById('m-title').textContent='Inserir Paciente';
-  ['m-time','m-extra','m-obs'].forEach(id=>document.getElementById(id).value='');
+  ['m-extra','m-obs'].forEach(id=>document.getElementById(id).value='');
   // Agenda no dia aberto no dashboard; nunca sugere data passada
   const vd=todayStr(viewDate);
   document.getElementById('m-appt-date').value=vd>hoje()?vd:hoje();
@@ -1788,7 +1788,6 @@ function openEdit(id){
   document.getElementById('m-obs').value=p.obs||'';
   document.getElementById('m-svc').value=p.service||'Transfusão';
   document.getElementById('m-turn').value=p.turn||'Manhã';
-  document.getElementById('m-time').value=p.time||'';
   document.getElementById('m-status').value=p.status||'Confirmado';
   document.getElementById('m-extra').value=p.extra||'';
   setSelPac(pacById(p.pacienteId));
@@ -1900,7 +1899,7 @@ function renderCadastro(){
       <div class="cad-av">${esc(p.nome[0])}</div>
       <div style="flex:1;min-width:0">
         <div class="an">${esc(p.nome)}</div>
-        <div class="ap">${esc(docLabel(p))}${p.phone?' · 📱 '+esc(p.phone):''} · ${ags.length} agendamento(s)${prox?` · próximo ${dmy(prox.apptDate)} ${esc(prox.time)}`:''}</div>
+        <div class="ap">${esc(docLabel(p))}${p.phone?' · 📱 '+esc(p.phone):''} · ${ags.length} agendamento(s)${prox?` · próximo ${dmy(prox.apptDate)} (${esc(prox.turn)})`:''}</div>
       </div>
       <div class="cad-acts">${ed?`<button class="tbl-act" title="Agendar" onclick="event.stopPropagation();agendarPaciente('${p.id}')">📅</button>`:''}<button class="tbl-act" title="Histórico" onclick="event.stopPropagation();openHistoricoPaciente('${p.id}')">📋</button></div>
     </div>`;
@@ -1984,7 +1983,6 @@ function normPhone(phone){
 }
 async function savePat(){
   if(denyEdit()||busy)return;
-  const time=document.getElementById('m-time').value;
   const apptDate=document.getElementById('m-appt-date').value;
   const service=document.getElementById('m-svc').value;
   const turn=document.getElementById('m-turn').value;
@@ -1992,13 +1990,10 @@ async function savePat(){
   const showsExtra=service==='Medicações'||service==='Pediátrica';
   if(!selPac){showToast('⚠️ Escolha o paciente na busca ou cadastre um novo','warn');G('m-pac-busca').focus();return;}
   if(!apptDate){showToast('⚠️ Informe a data do agendamento','warn');return;}
-  if(!time){showToast('⚠️ Informe o horário','warn');return;}
-  const[tIni,tFim]=turn==='Manhã'?['07:00','12:00']:['12:00','18:00'];
-  if(time<tIni||time>tFim){showToast(`⚠️ Horário fora do turno da ${turn} (${tIni}–${tFim})`,'warn');return;}
   const old=editId?patients.find(x=>x.id===editId):null;
   const data={
     // O formulário não pede mais nascimento; na edição, preserva o que já existia.
-    name:selPac.nome,time,dob:old?.dob||'',apptDate,service,turn,status,phone:selPac.phone,
+    name:selPac.nome,time:'',dob:old?.dob||'',apptDate,service,turn,status,phone:selPac.phone,
     gender:service==='Pediátrica'?'':document.getElementById('m-gender').value,
     blood:selPac.blood,pacienteId:selPac.id,serieId:old?.serieId||'',
     extra:showsExtra?document.getElementById('m-extra').value.trim():'',
@@ -2049,7 +2044,7 @@ function openDel(id){
   const p=patients.find(x=>x.id===id);if(!p)return;
   delId=id;
   document.getElementById('del-name').textContent=p.name;
-  document.getElementById('del-info').textContent=`${p.service} · ${p.turn} · ${p.time} · ${p.proto}`;
+  document.getElementById('del-info').textContent=`${p.service} · ${dmy(p.apptDate)} · ${p.turn} · ${p.proto}`;
   const prox=serieSiblings(p);
   G('del-serie').checked=false;
   G('del-serie-w').style.display=prox.length?'flex':'none';
@@ -2404,7 +2399,7 @@ function renderHistorico(){
         <div>
           <div class="hist-item-date">📅 ${dmy(h.apptDate)} ${isUpcoming?'<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-size:.6rem">Próximo</span>':''}</div>
           <div class="hist-item-title">${h.service} · ${h.turn}</div>
-          <div class="hist-item-sub">⏰ ${h.time} · 🩸 ${h.blood||'—'} · Prot: ${h.proto}${h.extra?' · '+h.extra:''}</div>
+          <div class="hist-item-sub">🩸 ${h.blood||'—'} · Prot: ${h.proto}${h.extra?' · '+h.extra:''}</div>
           ${h.obs?`<div class="hist-item-sub" style="margin-top:3px">📝 ${h.obs}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
@@ -2461,7 +2456,7 @@ Seu agendamento:
 
 📋 Serviço: *${p.service}*
 📅 Data: *${p.apptDate?dmy(p.apptDate):'A confirmar'}*
-⏰ Horário: *${p.time||'A confirmar'}*
+🕐 Turno: *${turnoTxt(p)}*
 
 Por favor, chegue com 15 minutos de antecedência.
 Dúvidas: entre em contato conosco.
@@ -2473,7 +2468,7 @@ Dúvidas: entre em contato conosco.
 function sendSMSById(id){
   const p=contactablePatient(id);
   if(!p)return;
-  const msg=encodeURIComponent(`Hemocentro JP: Ola ${p.name}, seu agendamento de ${p.service} em ${p.apptDate?dmy(p.apptDate):'data a confirmar'} as ${p.time||'horario a confirmar'}. Qualquer duvida nos contate.`);
+  const msg=encodeURIComponent(`Hemocentro JP: Ola ${p.name}, seu agendamento de ${p.service} em ${p.apptDate?dmy(p.apptDate):'data a confirmar'}, turno da ${p.turn==='Tarde'?'tarde (12h-18h)':'manha (07h-12h)'}. Qualquer duvida nos contate.`);
   location.href=`sms:+55${normPhone(p.phone)}?body=${msg}`;
 }
 
@@ -2517,8 +2512,7 @@ function printFicha(id){
   <div class="section" style="border-left-color:#7c3aed"><h3>Dados do Agendamento</h3>
     <div class="row"><span class="lbl">Serviço</span><span class="val">${p.service}</span></div>
     <div class="row"><span class="lbl">Data do agendamento</span><span class="val">${p.apptDate?p.apptDate.split('-').reverse().join('/'):'—'}</span></div>
-    <div class="row"><span class="lbl">Turno</span><span class="val">${p.turn}</span></div>
-    <div class="row"><span class="lbl">Horário</span><span class="val">${p.time}</span></div>
+    <div class="row"><span class="lbl">Turno</span><span class="val">${esc(turnoTxt(raw))}</span></div>
     <div class="row"><span class="lbl">Gênero</span><span class="val">${p.gender||'—'}</span></div>
     ${p.extra?`<div class="row"><span class="lbl">Info adicional</span><span class="val">${p.extra}</span></div>`:''}
     ${p.obs?`<div class="row"><span class="lbl">Observações</span><span class="val">${p.obs}</span></div>`:''}
@@ -2548,11 +2542,11 @@ function printDayList(){
     const l=list.filter(p=>p.service===svc&&p.turn===t&&(!porGen||(g==='Feminino')===(p.gender==='Feminino')));
     if(!l.length)continue;
     n+=l.length;
-    body+=`<h3>${svc} · ${t}${g?' · '+g:''} <span>(${l.length})</span></h3><table><thead><tr><th>Hora</th><th>Paciente</th><th>Prot.</th><th>Documento</th><th>Tipo</th><th>${svc==='Medicações'?'Medicação':svc==='Pediátrica'?'Responsável':'Obs.'}</th><th>Telefone</th><th>Status</th><th class="c">Presente</th></tr></thead><tbody>`
-      +l.map(raw=>{const p=escObj(raw),pc=pacById(raw.pacienteId);
+    body+=`<h3>${svc} · ${t}${g?' · '+g:''} <span>(${l.length})</span></h3><table><thead><tr><th>Nº</th><th>Paciente</th><th>Prot.</th><th>Documento</th><th>Tipo</th><th>${svc==='Medicações'?'Medicação':svc==='Pediátrica'?'Responsável':'Obs.'}</th><th>Telefone</th><th>Status</th><th class="c">Presente</th></tr></thead><tbody>`
+      +l.map((raw,idx)=>{const p=escObj(raw),pc=pacById(raw.pacienteId);
         const tags=[raw.encaixe&&'encaixe',raw.serieId&&'série'].filter(Boolean).join(', ');
         const info=[p.extra,p.obs].filter(Boolean).join(' · ');
-        return`<tr><td><strong>${p.time}</strong></td><td><strong>${p.name}</strong>${tags?` <em>(${tags})</em>`:''}</td><td>${p.proto}</td><td>${esc(pc?docLabel(pc):'—')}</td><td>${p.blood||'—'}</td><td>${info||'—'}</td><td>${p.phone||'—'}</td><td>${p.status}</td><td class="c">☐</td></tr>`;}).join('')
+        return`<tr><td><strong>${idx+1}º</strong></td><td><strong>${p.name}</strong>${tags?` <em>(${tags})</em>`:''}</td><td>${p.proto}</td><td>${esc(pc?docLabel(pc):'—')}</td><td>${p.blood||'—'}</td><td>${info||'—'}</td><td>${p.phone||'—'}</td><td>${p.status}</td><td class="c">☐</td></tr>`;}).join('')
       +`</tbody></table>`;
   }
   const d=new Date();

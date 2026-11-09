@@ -12,6 +12,7 @@ Agendamento de transfusão, transfusão pediátrica, medicações e sangria tera
 - `supabase/004_dias_e_comparecimento.sql` — dias de atendimento, datas bloqueadas e status Compareceu/Faltou
 - `supabase/005_pacientes_e_series.sql` — cadastro único de pacientes e agendamentos em série
 - `supabase/006_backup_automatico.sql` — cópia diária no servidor e função de restauração
+- `supabase/007_horario_opcional.sql` — agendamento só por turno (horário opcional)
 
 Não precisa de compilação. Qualquer hospedagem estática com HTTPS serve (GitHub Pages, Netlify).
 
@@ -62,7 +63,7 @@ Depois do envio completo, ele oferece apagar a cópia local. Quem tiver um arqui
 - Importar backup restaura agendamentos, mas não o cadastro de pacientes.
 - Quem garante as vagas é o banco, inclusive quando duas pessoas reservam ao mesmo tempo.
 - Com o turno lotado, a recepção é bloqueada; o gestor pode autorizar um encaixe.
-- Manhã aceita horários das 07:00 às 12:00; Tarde, das 12:00 às 18:00.
+- O agendamento é por **turno** (Manhã 07h–12h, Tarde 12h–18h), sem horário. Dentro do turno, a ordem é a de agendamento (protocolo).
 - Perfil médico: somente leitura. Painel do Gestor, Usuários e histórico de alterações: somente gestor.
 - Tipo sanguíneo começa como "Não informado"; o sistema não presume um valor.
 
