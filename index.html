@@ -491,6 +491,31 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .serie-d{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:12px;background:#d1fae5;color:#065f46;}
 .serie-d.bad{background:#fee2e2;color:#991b1b;}
 @media(max-width:767px){.pac-busca input,.serie-box input[type=number]{font-size:16px;}}
+.ns{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--light);padding:12px 11px 5px;}
+.ns:first-child{padding-top:2px;}
+.kbd-hint{font-size:.6rem;color:var(--light);padding:6px 11px 0;line-height:1.6;}
+.kbd-hint kbd{font-family:inherit;font-size:.58rem;font-weight:700;background:#f1f5f9;border:1px solid var(--border);border-radius:4px;padding:0 4px;}
+.svc-chips{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px;}
+.svc-chip{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:5px 11px;font-family:inherit;font-size:.72rem;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;}
+.svc-chip:hover{border-color:var(--T);color:var(--T);}
+.svc-chip.on{background:var(--T);border-color:var(--T);color:#fff;}
+.cad-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;}
+.cad-row:hover{background:#f8fafc;}
+.cad-row:last-child{border-bottom:none;}
+.cad-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;}
+.cad-acts{display:flex;gap:4px;flex-shrink:0;}
+.bnav{display:none;}
+@media(max-width:767px){
+  .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:160;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
+  .bnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;font-family:inherit;font-size:.62rem;font-weight:700;color:var(--muted);cursor:pointer;padding:4px 0;}
+  .bnav button span{font-size:1.15rem;line-height:1;}
+  .bnav button.active{color:var(--T);}
+  .bnav .bnav-add{flex:0 0 auto;width:52px;height:52px;margin:-20px 6px 0;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;box-shadow:0 6px 18px rgba(37,99,235,.35);justify-content:center;}
+  .bnav .bnav-add span{font-size:1.6rem;font-weight:400;}
+  .main{padding-bottom:calc(96px + env(safe-area-inset-bottom));}
+  .toast{bottom:calc(82px + env(safe-area-inset-bottom));right:12px;left:12px;max-width:none;}
+  .kbd-hint{display:none;}
+}
 /* ══ FILTRO DO DASHBOARD ══ */
 .filter-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;}
 .filter-banner button{background:#fff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
@@ -562,31 +587,17 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <div class="search-results-drop" id="search-drop"></div>
     </div>
     <nav class="sb-nav">
-      <div class="ni active" data-page="dashboard" onclick="clearDashFilter();showPage('dashboard')"><span class="nil"><span class="ico">🏠</span>Dashboard</span></div>
-      <div class="ni" id="ni-t" onclick="toggleNC('t',this)"><span class="nil"><span class="ico">💉</span>Transfusão</span><span class="chv">›</span></div>
-      <div class="nc" id="nc-t">
-        <div class="nch" onclick="setChildActive(this);filterDash('Transfusão','Feminino','Manhã')"><span>👩</span>Feminino – Manhã</div>
-        <div class="nch" onclick="setChildActive(this);filterDash('Transfusão','Feminino','Tarde')"><span>👩</span>Feminino – Tarde</div>
-        <div class="nch" onclick="setChildActive(this);filterDash('Transfusão','Masculino','Manhã')"><span>👨</span>Masculino – Manhã</div>
-        <div class="nch" onclick="setChildActive(this);filterDash('Transfusão','Masculino','Tarde')"><span>👨</span>Masculino – Tarde</div>
-      </div>
-      <div class="ni" id="ni-p" onclick="toggleNC('p',this)"><span class="nil"><span class="ico">👶</span>Pediátrica</span><span class="chv">›</span></div>
-      <div class="nc" id="nc-p">
-        <div class="nch" onclick="setChildActive(this);filterDash('Pediátrica',null,'Manhã')"><span>🌅</span>Manhã</div>
-        <div class="nch" onclick="setChildActive(this);filterDash('Pediátrica',null,'Tarde')"><span>🌆</span>Tarde</div>
-      </div>
-      <div class="ni" onclick="setActive(this);filterDash('Medicações')"><span class="nil"><span class="ico">💊</span>Medicações</span></div>
-      <div class="ni" id="ni-s" onclick="toggleNC('s',this)"><span class="nil"><span class="ico">🩸</span>Sangria Terapêutica</span><span class="chv">›</span></div>
-      <div class="nc" id="nc-s">
-        <div class="nch" onclick="setChildActive(this);filterDash('Sangria','Feminino')"><span>👩</span>Feminino</div>
-        <div class="nch" onclick="setChildActive(this);filterDash('Sangria','Masculino')"><span>👨</span>Masculino</div>
-      </div>
-      <div class="ni" data-page="patients" onclick="showPage('patients')"><span class="nil"><span class="ico">👥</span>Pacientes</span></div>
+      <div class="ns">Atendimento</div>
+      <div class="ni active" data-page="dashboard" onclick="clearDashFilter();showPage('dashboard')"><span class="nil"><span class="ico">🏠</span>Início</span></div>
+      <div class="ni" data-page="patients" onclick="showPage('patients')"><span class="nil"><span class="ico">📅</span>Agendamentos</span></div>
+      <div class="ni" data-page="cadastro" onclick="showPage('cadastro')"><span class="nil"><span class="ico">👥</span>Pacientes</span></div>
+      <div class="ns">Acompanhamento</div>
       <div class="ni" data-page="relatorios" onclick="showPage('relatorios')"><span class="nil"><span class="ico">📊</span>Relatórios</span></div>
       <div class="ni" data-page="alertas" onclick="showPage('alertas')"><span class="nil"><span class="ico">🔔</span>Alertas <span id="alert-count-badge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;font-size:.58rem;padding:1px 5px;font-weight:800;margin-left:4px">0</span></span></div>
-      <div class="ni" data-page="historico" onclick="showPage('historico')"><span class="nil"><span class="ico">📋</span>Histórico Paciente</span></div>
+      <div class="ns g-only">Gestão</div>
       <div class="ni g-only" data-page="mgmt" onclick="showPage('mgmt')"><span class="nil"><span class="ico">⚙️</span>Painel do Gestor</span></div>
       <div class="ni g-only" data-page="usuarios" onclick="showPage('usuarios')"><span class="nil"><span class="ico">👤</span>Usuários</span></div>
+      <div class="kbd-hint">Atalhos: <kbd>N</kbd> novo agendamento · <kbd>/</kbd> buscar · <kbd>Esc</kbd> fechar</div>
     </nav>
     <div class="sb-foot"><button class="btnout" onclick="doLogout()">↩ Sair</button></div>
   </aside>
@@ -639,7 +650,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
                 <span class="plink" onclick="showPage('patients')">Ver todos →</span>
               </div>
             </div>
-            <div id="appt-list"></div>
+            <div class="svc-chips" id="svc-chips"></div>
+          <div id="appt-list"></div>
           </div>
           <div class="ibar fu3">
             <div class="ic"><div class="ii">👥</div><div class="in" id="tot-p">0</div><div class="il">Total</div></div>
@@ -676,7 +688,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
     <!-- PATIENTS -->
     <div id="page-patients" class="page">
-      <div class="page-hdr"><div><h2>👥 Lista de Pacientes</h2><p>Todos os agendamentos cadastrados no sistema</p></div><button class="btn-add can-edit" onclick="openAddPatient()">+ Inserir Paciente</button></div>
+      <div class="page-hdr"><div><h2>📅 Agendamentos</h2><p>Todos os agendamentos, de qualquer data</p></div><button class="btn-add can-edit" onclick="openAddPatient()">+ Novo Agendamento</button></div>
       <div class="panel">
         <div class="search-bar">
           <input type="text" id="srch" placeholder="🔍 Buscar por nome, protocolo, CPF ou Cartão SUS..." oninput="renderPTable()"/>
@@ -748,7 +760,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
     <!-- MGMT -->
     <div id="page-mgmt" class="page">
-      <div class="page-hdr"><div><h2>⚙️ Painel do Gestor</h2><p>Configure vagas por serviço e turno</p></div><button class="btn-add" onclick="openAddPatient()">+ Inserir Paciente</button></div>
+      <div class="page-hdr"><div><h2>⚙️ Painel do Gestor</h2><p>Configure vagas, dias de atendimento e backups</p></div><button class="btn-add" onclick="openAddPatient()">+ Novo Agendamento</button></div>
       <div class="mgmt-grid">
         <div class="mgmt-col">
           <div class="cap-card"><div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#dbeafe,#eff6ff)">💉</div><div><h3>Transfusão</h3><p>Vagas por turno e gênero</p></div></div><div class="cap-rows" id="cap-T"></div></div>
@@ -796,10 +808,18 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
 
     <!-- HISTÓRICO -->
+    <div id="page-cadastro" class="page">
+      <div class="page-hdr"><div><h2>👥 Pacientes</h2><p>Cadastro único: busque pelo nome, CPF ou Cartão SUS</p></div><button class="btn-add can-edit" onclick="openPacModal(null)">+ Novo Paciente</button></div>
+      <div class="panel">
+        <div class="search-bar"><input type="text" id="cad-srch" placeholder="🔍 Nome, CPF ou Cartão SUS..." oninput="renderCadastro()" autocomplete="off"/></div>
+        <div id="cad-list"></div>
+      </div>
+    </div>
+
     <div id="page-historico" class="page">
       <div class="page-hdr">
         <div><h2>📋 Histórico do Paciente</h2><p id="hist-page-sub">Selecione um paciente para ver o histórico</p></div>
-        <button class="btn-add" onclick="showPage('patients')">← Voltar</button>
+        <button class="btn-add" onclick="voltar()">← Voltar</button>
       </div>
       <div id="hist-content"></div>
     </div>
@@ -811,6 +831,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
 
   </main>
+  <nav class="bnav" id="bnav">
+    <button data-page="dashboard" onclick="clearDashFilter();showPage('dashboard')"><span>🏠</span>Início</button>
+    <button data-page="patients" onclick="showPage('patients')"><span>📅</span>Agenda</button>
+    <button class="bnav-add can-edit" onclick="openAddPatient()" aria-label="Novo agendamento" title="Novo agendamento"><span>＋</span></button>
+    <button data-page="cadastro" onclick="showPage('cadastro')"><span>👥</span>Pacientes</button>
+    <button onclick="toggleSidebar()"><span>☰</span>Mais</button>
+  </nav>
 </div>
 
 <!-- MODAL: PATIENT -->
@@ -1161,7 +1188,11 @@ function showApp(){
   document.getElementById('app-screen').classList.add('active');
   renderUserChrome();
   dashFilter=null; viewDate=new Date(); syncCal();
-  updatePageDate(); showPage('dashboard');
+  updatePageDate();
+  const inicial=pageFromHash();
+  routing=true;
+  try{showPage(inicial==='historico'?'dashboard':inicial);}finally{routing=false;}
+  history.replaceState(null,'',location.pathname+location.search+'#/'+(document.querySelector('.page.active')?.id.replace('page-','')||'dashboard'));
 }
 window.onload=async()=>{
   if(!sb){showLogin('Sem conexão: não foi possível carregar o sistema. Recarregue a página.');return;}
@@ -1307,7 +1338,9 @@ function renderApptList(){
   let html='';
   const fechado=dayClosed(todayStr(viewDate));
   if(fechado)html+=`<div class="closed-banner">🚫 Sem atendimento neste dia: ${esc(fechado)}</div>`;
-  if(f)html+=`<div class="filter-banner"><span>Mostrando: ${[f.svc,f.gender,f.turn].filter(Boolean).join(' · ')}</span><button onclick="clearDashFilter();showPage('dashboard')">Ver todos os serviços</button></div>`;
+  const chips=[['','Todos'],['Transfusão','💉 Transfusão'],['Pediátrica','👶 Pediátrica'],['Medicações','💊 Medicações'],['Sangria','🩸 Sangria']];
+  G('svc-chips').innerHTML=chips.map(([v,l])=>`<button class="svc-chip${(f?.svc||'')===v?' on':''}" onclick="${v?`filterDash('${v}')`:`clearDashFilter();renderDashboard()`}">${l}</button>`).join('');
+  if(f&&(f.gender||f.turn))html+=`<div class="filter-banner"><span>Mostrando: ${[f.svc,f.gender,f.turn].filter(Boolean).join(' · ')}</span><button onclick="clearDashFilter();showPage('dashboard')">Ver todos os serviços</button></div>`;
   svcs.forEach(s=>{
     html+=`<span class="slbl3" style="color:${s.color}">${s.label}</span>`;
     if(s.type==='flat'){
@@ -1837,11 +1870,53 @@ async function savePac(){
     pacientes=editando?pacientes.map(x=>x.id===saved.id?saved:x):[...pacientes,saved];
     closeModal('modal-pac');
     if(pacFromForm)setSelPac(saved);
+    if(G('page-cadastro').classList.contains('active'))renderCadastro();
+    if(histRef&&histRef.pacienteId===saved.id)renderHistorico();
     showToast(editando?'✅ Cadastro atualizado (e os agendamentos futuros)':'✅ Paciente cadastrado','ok');
   }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');return;}
   finally{busy=false;}
   if(editando)syncNow(); // o banco atualizou nome/telefone nos agendamentos futuros
   else if(histRef)renderHistorico();
+}
+
+// ── Página de pacientes ──
+function renderCadastro(){
+  const el=G('cad-list');if(!el)return;
+  const q=(G('cad-srch').value||'').trim().toLowerCase(),d=onlyDigits(q);
+  const hojeS=hoje();
+  let lista=pacientes.filter(p=>!q||p.nome.toLowerCase().includes(q)||(d.length>=3&&(p.cpf.includes(d)||p.cns.includes(d))));
+  lista.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  const total=lista.length;
+  lista=lista.slice(0,100);
+  if(!total){
+    el.innerHTML=`<div style="text-align:center;padding:24px;color:var(--light);font-size:.82rem">${pacientes.length?'Nenhum paciente encontrado':'Nenhum paciente cadastrado ainda. Os pacientes são cadastrados ao criar o primeiro agendamento.'}</div>`;
+    return;
+  }
+  const ed=canEdit();
+  el.innerHTML=lista.map(p=>{
+    const ags=patients.filter(a=>a.pacienteId===p.id);
+    const prox=ags.filter(a=>isActive(a)&&effDate(a)>=hojeS).sort(byDateTime)[0];
+    return`<div class="cad-row" onclick="openHistoricoPaciente('${p.id}')">
+      <div class="cad-av">${esc(p.nome[0])}</div>
+      <div style="flex:1;min-width:0">
+        <div class="an">${esc(p.nome)}</div>
+        <div class="ap">${esc(docLabel(p))}${p.phone?' · 📱 '+esc(p.phone):''} · ${ags.length} agendamento(s)${prox?` · próximo ${dmy(prox.apptDate)} ${esc(prox.time)}`:''}</div>
+      </div>
+      <div class="cad-acts">${ed?`<button class="tbl-act" title="Agendar" onclick="event.stopPropagation();agendarPaciente('${p.id}')">📅</button>`:''}<button class="tbl-act" title="Histórico" onclick="event.stopPropagation();openHistoricoPaciente('${p.id}')">📋</button></div>
+    </div>`;
+  }).join('')+(total>100?`<div style="text-align:center;padding:10px;font-size:.72rem;color:var(--light)">Mostrando 100 de ${total}. Refine a busca.</div>`:'');
+}
+function agendarPaciente(pacId){
+  openAddPatient();
+  setSelPac(pacById(pacId));
+}
+function openHistoricoPaciente(pacId){
+  const pac=pacById(pacId);if(!pac)return;
+  const ags=patients.filter(a=>a.pacienteId===pacId).sort((a,b)=>effDate(b).localeCompare(effDate(a)));
+  if(ags.length){openHistorico(ags[0].id);return;}
+  histRef={id:null,name:pac.nome,dob:'',pacienteId:pacId};
+  renderHistorico();
+  showPage('historico');
 }
 
 // ── Série ──
@@ -2056,6 +2131,7 @@ async function confirmDel(){
 // background: atualização vinda de outra tela; não descarta alterações de vagas ainda não aplicadas.
 function refreshViews(background=false){
   renderDashboard();renderPTable();
+  if(G('page-cadastro').classList.contains('active'))renderCadastro();
   if(document.getElementById('page-relatorios').classList.contains('active'))renderRelatorio();
   if(!background&&document.getElementById('page-mgmt').classList.contains('active'))renderMgmt();
   if(document.getElementById('page-alertas').classList.contains('active'))renderAlerts();
@@ -2167,20 +2243,28 @@ async function delUser(id){
 // ══════════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════════
+const PAGES=['dashboard','patients','cadastro','relatorios','mgmt','usuarios','historico','alertas'];
+let routing=false; // true quando a troca de tela veio do botão voltar/avançar
+function pageFromHash(){
+  const p=(location.hash.match(/^#\/([a-z]+)/)||[])[1];
+  return PAGES.includes(p)?p:'dashboard';
+}
 function showPage(page){
+  if(!PAGES.includes(page))page='dashboard';
   if((page==='mgmt'||page==='usuarios')&&!isGestor())page='dashboard';
+  if(page==='historico'&&!histRef)page='cadastro';
   if(window.innerWidth<768)closeSidebar();
-  const titles={dashboard:'Sistema de Agendamentos',patients:'Pacientes',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
+  const titles={dashboard:'Início',patients:'Agendamentos',cadastro:'Pacientes',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
   document.getElementById('page-title').textContent=titles[page]||'';
-  ['dashboard','patients','relatorios','mgmt','usuarios','historico','alertas'].forEach(p=>{
+  PAGES.forEach(p=>{
     document.getElementById(`page-${p}`)?.classList.toggle('active',p===page);
   });
-  // Com filtro ativo, o destaque fica no item do filtro (setActive/setChildActive)
-  if(!(page==='dashboard'&&dashFilter)){
-    document.querySelectorAll('.nch').forEach(n=>n.classList.remove('active'));
-    document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
-  }
+  // O histórico é aberto a partir de Pacientes: o menu continua destacando Pacientes.
+  const marcado=page==='historico'?'cadastro':page;
+  document.querySelectorAll('.ni,.bnav button').forEach(n=>n.classList.toggle('active',n.dataset.page===marcado));
+  if(!routing&&location.hash!=='#/'+page)history.pushState(null,'','#/'+page);
   if(page==='dashboard')renderDashboard();
+  if(page==='cadastro')renderCadastro();
   if(page==='patients')renderPTable();
   if(page==='relatorios')renderRelatorio();
   if(page==='mgmt')renderMgmt();
@@ -2188,6 +2272,32 @@ function showPage(page){
   if(page==='alertas')renderAlerts();
   window.scrollTo(0,0);
 }
+function voltar(){
+  if(history.length>1)history.back();else showPage('cadastro');
+}
+window.addEventListener('popstate',()=>{
+  if(!curUser)return;
+  // Voltar com uma janela aberta fecha a janela
+  document.querySelectorAll('.modal-bg.open').forEach(m=>{if(m.id!=='modal-code')m.classList.remove('open');});
+  closeSidebar();
+  routing=true;
+  try{showPage(pageFromHash());}finally{routing=false;}
+});
+// Atalhos de teclado: N = novo agendamento, / = buscar paciente, Esc = fechar
+document.addEventListener('keydown',e=>{
+  if(!curUser||e.ctrlKey||e.metaKey||e.altKey)return;
+  const t=e.target,digitando=/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.isContentEditable;
+  const abertas=[...document.querySelectorAll('.modal-bg.open')];
+  if(e.key==='Escape'){
+    const m=abertas.pop();
+    if(m){if(m.id!=='modal-code'){m.classList.remove('open');e.preventDefault();}}
+    else closeSidebar();
+    return;
+  }
+  if(digitando||abertas.length)return;
+  if(e.key==='n'||e.key==='N'){if(canEdit()){e.preventDefault();openAddPatient();}}
+  else if(e.key==='/'){e.preventDefault();if(window.innerWidth<768)toggleSidebar();G('global-search').focus();}
+});
 function setActive(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.nch').forEach(n=>n.classList.remove('active'));el.classList.add('active');if(window.innerWidth<768)closeSidebar();}
 function setChildActive(el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.nch').forEach(n=>n.classList.remove('active'));el.classList.add('active');}
 function toggleNC(id,btn){document.getElementById('nc-'+id).classList.toggle('open');btn.classList.toggle('open');}
@@ -2253,6 +2363,18 @@ function renderHistorico(){
     .sort((a,b)=>(b.apptDate||'').localeCompare(a.apptDate||''));
   const el=document.getElementById('hist-content');
   const sub=document.getElementById('hist-page-sub');
+  const pacSo=!history.length&&histRef?.pacienteId?pacById(histRef.pacienteId):null;
+  if(pacSo){
+    if(sub)sub.textContent='Nenhum agendamento ainda';
+    el.innerHTML=`<div class="hist-header"><div class="hist-av">${esc(pacSo.nome[0])}</div><div style="flex:1;min-width:0">
+      <div class="hist-name">${esc(pacSo.nome)}</div>
+      <div class="hist-meta">📱 ${esc(pacSo.phone||'Sem telefone')} · 🩸 ${esc(pacSo.blood||'—')}</div>
+      <div class="hist-meta">🪪 ${esc(docLabel(pacSo))}</div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        ${canEdit()?`<button class="whatsapp-btn" style="background:#f1f5f9;color:#374151" onclick="agendarPaciente('${pacSo.id}')">📅 Agendar</button><button class="whatsapp-btn" style="background:#0f766e" onclick="openPacModal('${pacSo.id}')">🪪 Cadastro</button>`:''}
+      </div></div></div>`;
+    return;
+  }
   if(!history.length){
     histRef=null;
     el.innerHTML=HIST_EMPTY;
@@ -2309,7 +2431,7 @@ function renderHistorico(){
         <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
           ${whatsLink}${smsLink}
           ${ed&&pac?`<button class="whatsapp-btn" style="background:#0f766e" onclick="openPacModal('${pac.id}')">🪪 Cadastro</button>`:''}
-          ${ed?`<button class="whatsapp-btn" style="background:#f1f5f9;color:#374151" onclick="openAddPatient('${p.id}')">+ Novo Agend.</button>`:''}
+          ${ed?`<button class="whatsapp-btn" style="background:#f1f5f9;color:#374151" onclick="openAddPatient('${p.id}')">📅 Agendar</button>`:''}
         </div>
       </div>
     </div>
