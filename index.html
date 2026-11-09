@@ -478,6 +478,19 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .blq-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:.78rem;}
 .blq-item:last-child{border-bottom:none;}
 @media(max-width:767px){.blq-form input{font-size:16px;}}
+.pac-sel{display:flex;gap:8px;align-items:center;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:10px 12px;flex-wrap:wrap;}
+.pac-sel .pn{font-weight:800;font-size:.86rem;}
+.pac-busca{position:relative;}
+.pac-busca input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.86rem;outline:none;background:#f8fafc;}
+.pac-busca input:focus{border-color:var(--T);background:#fff;}
+.pac-hint{font-size:.68rem;color:#b45309;margin-top:5px;}
+.serie-box{background:#f8fafc;border:1.5px dashed var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.78rem;}
+.serie-box label{display:inline-flex;align-items:center;gap:6px;font-weight:700;cursor:pointer;}
+.serie-box input[type=number]{width:62px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;}
+.serie-prev{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;}
+.serie-d{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:12px;background:#d1fae5;color:#065f46;}
+.serie-d.bad{background:#fee2e2;color:#991b1b;}
+@media(max-width:767px){.pac-busca input,.serie-box input[type=number]{font-size:16px;}}
 /* ══ FILTRO DO DASHBOARD ══ */
 .filter-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;}
 .filter-banner button{background:#fff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
@@ -622,6 +635,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
                 <button onclick="navDate(-1)" style="background:#f1f5f9;border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">‹</button>
                 <button onclick="goTodayDash()" style="background:#f1f5f9;border:none;border-radius:8px;padding:0 10px;height:28px;cursor:pointer;font-size:.68rem;font-weight:700;transition:background .15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Hoje</button>
                 <button onclick="navDate(1)" style="background:#f1f5f9;border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">›</button>
+                <span class="plink" onclick="printDayList()" title="Imprimir a lista deste dia">🖨️ Lista</span>
                 <span class="plink" onclick="showPage('patients')">Ver todos →</span>
               </div>
             </div>
@@ -665,7 +679,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <div class="page-hdr"><div><h2>👥 Lista de Pacientes</h2><p>Todos os agendamentos cadastrados no sistema</p></div><button class="btn-add can-edit" onclick="openAddPatient()">+ Inserir Paciente</button></div>
       <div class="panel">
         <div class="search-bar">
-          <input type="text" id="srch" placeholder="🔍 Buscar por nome ou protocolo..." oninput="renderPTable()"/>
+          <input type="text" id="srch" placeholder="🔍 Buscar por nome, protocolo, CPF ou Cartão SUS..." oninput="renderPTable()"/>
           <select id="f-svc" onchange="renderPTable()"><option value="">Todos Serviços</option><option>Transfusão</option><option>Pediátrica</option><option>Medicações</option><option>Sangria</option></select>
           <select id="f-st" onchange="renderPTable()"><option value="">Todos Status</option><option>Confirmado</option><option>Pendente</option><option>Compareceu</option><option>Faltou</option><option>Cancelado</option></select>
         </div>
@@ -802,28 +816,55 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <h2 id="m-title">Inserir Paciente</h2><p class="msub">Preencha os dados do agendamento</p>
     <div class="mfg" style="background:linear-gradient(90deg,#eff6ff,#f5f3ff);border-radius:12px;padding:12px 14px;border:1.5px solid #bfdbfe;margin-bottom:4px;">
       <label style="color:#1e40af;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">📅 Data do Agendamento</label>
-      <input type="date" id="m-appt-date" style="margin-top:6px;width:100%;padding:10px 12px;border:1.5px solid #bfdbfe;border-radius:9px;font-family:inherit;font-size:.9rem;font-weight:700;color:#1e40af;background:#fff;outline:none;"/>
+      <input type="date" id="m-appt-date" onchange="updSerie()" style="margin-top:6px;width:100%;padding:10px 12px;border:1.5px solid #bfdbfe;border-radius:9px;font-family:inherit;font-size:.9rem;font-weight:700;color:#1e40af;background:#fff;outline:none;"/>
       <div style="font-size:.67rem;color:#64748b;margin-top:5px;">💡 Pode agendar para qualquer data futura</div>
     </div>
-    <div class="mfg"><label>Nome Completo</label><input type="text" id="m-name" placeholder="Nome do paciente"/></div>
+    <div class="mfg">
+      <label>Paciente</label>
+      <div id="m-pac-sel" class="pac-sel" style="display:none"></div>
+      <div id="m-pac-busca-w" class="pac-busca">
+        <input type="text" id="m-pac-busca" placeholder="Buscar por nome, CPF ou Cartão SUS" autocomplete="off" oninput="pacSearch()" onfocus="pacSearch()" onblur="setTimeout(()=>document.getElementById('m-pac-drop').classList.remove('open'),200)"/>
+        <div class="search-results-drop" id="m-pac-drop"></div>
+        <div class="pac-hint" id="m-pac-hint" style="display:none">Este agendamento ainda não tem cadastro: escolha o paciente ou cadastre-o.</div>
+      </div>
+    </div>
     <div class="mrow">
       <div class="mfg"><label>Serviço</label><select id="m-svc" onchange="updModal()"><option value="Transfusão">Transfusão</option><option value="Pediátrica">Pediátrica</option><option value="Medicações">Medicações</option><option value="Sangria">Sangria</option></select></div>
-      <div class="mfg"><label>Turno</label><select id="m-turn"><option value="Manhã">Manhã (07h–12h)</option><option value="Tarde">Tarde (12h–18h)</option></select></div>
+      <div class="mfg"><label>Turno</label><select id="m-turn" onchange="updSerie()"><option value="Manhã">Manhã (07h–12h)</option><option value="Tarde">Tarde (12h–18h)</option></select></div>
     </div>
     <div class="mrow">
       <div class="mfg"><label>Horário</label><input type="time" id="m-time" min="07:00" max="18:00"/></div>
-      <div class="mfg" id="m-g-grp"><label>Gênero</label><select id="m-gender"><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select></div>
+      <div class="mfg" id="m-g-grp"><label>Gênero</label><select id="m-gender" onchange="updSerie()"><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select></div>
     </div>
     <div class="mrow">
-      <div class="mfg"><label>Tipo Sanguíneo</label><select id="m-blood"><option value="">Não informado</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
       <div class="mfg"><label>Status</label><select id="m-status"><option value="Confirmado">Confirmado</option><option value="Pendente">Pendente</option><option value="Compareceu">Compareceu</option><option value="Faltou">Faltou</option><option value="Cancelado">Cancelado</option></select></div>
     </div>
     <div class="mfg" id="m-extra-w" style="display:none"><label id="m-extra-l">Info</label><input type="text" id="m-extra" placeholder=""/></div>
-    <div class="mrow">
-      <div class="mfg"><label>📱 Celular (WhatsApp)</label><input type="tel" id="m-phone" placeholder="(83) 9 9999-9999"/></div>
-      <div class="mfg"><label>Observações</label><input type="text" id="m-obs" placeholder="Anotação opcional"/></div>
+    <div class="mfg"><label>Observações</label><input type="text" id="m-obs" placeholder="Anotação opcional"/></div>
+    <div class="serie-box" id="m-serie-w">
+      <label><input type="checkbox" id="m-serie" onchange="updSerie()"/>🔁 Repetir este agendamento</label>
+      <span id="m-serie-opts" style="display:none"> a cada <input type="number" id="m-serie-int" value="21" min="1" max="90" oninput="updSerie()"/> dias, <input type="number" id="m-serie-n" value="4" min="2" max="12" oninput="updSerie()"/> vezes</span>
+      <div class="serie-prev" id="m-serie-prev"></div>
     </div>
     <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-pat')">Cancelar</button><button class="btn-confirm" onclick="savePat()">💾 Salvar</button></div>
+  </div>
+</div>
+
+<!-- MODAL: CADASTRO DO PACIENTE -->
+<div class="modal-bg" id="modal-pac">
+  <div class="modal">
+    <h2 id="pc-title">Cadastro do Paciente</h2><p class="msub">Os dados valem para os agendamentos deste paciente de hoje em diante</p>
+    <div class="mfg"><label>Nome Completo</label><input type="text" id="pc-nome" placeholder="Nome do paciente"/></div>
+    <div class="mrow">
+      <div class="mfg"><label>CPF</label><input type="text" id="pc-cpf" inputmode="numeric" placeholder="000.000.000-00"/></div>
+      <div class="mfg"><label>Cartão SUS (CNS)</label><input type="text" id="pc-cns" inputmode="numeric" placeholder="000 0000 0000 0000"/></div>
+    </div>
+    <div class="mrow">
+      <div class="mfg"><label>📱 Celular (WhatsApp)</label><input type="tel" id="pc-tel" placeholder="(83) 9 9999-9999"/></div>
+      <div class="mfg"><label>Tipo Sanguíneo</label><select id="pc-blood"><option value="">Não informado</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+    </div>
+    <div class="mfg"><label>Gênero</label><select id="pc-genero"><option value="">Não informado</option><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-pac')">Cancelar</button><button class="btn-confirm" onclick="savePac()">💾 Salvar cadastro</button></div>
   </div>
 </div>
 
@@ -835,6 +876,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <p style="font-size:.85rem;font-weight:700;color:#991b1b;" id="del-name">—</p>
       <p style="font-size:.72rem;color:#b91c1c;margin-top:3px;" id="del-info">—</p>
     </div>
+    <label id="del-serie-w" style="display:none;margin-top:12px;font-size:.8rem;font-weight:700;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="del-serie"/><span id="del-serie-l"></span></label>
     <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-del')">Cancelar</button><button class="btn-del" onclick="confirmDel()">🗑️ Excluir</button></div>
   </div>
 </div>
@@ -898,6 +940,32 @@ let viewDate = new Date(); // Date currently shown in dashboard
 let calY=new Date().getFullYear(), calM=new Date().getMonth();
 let dashFilter=null, histRef=null, capsDraft=null, busy=false;
 let diasSemana=[0,1,2,3,4,5,6], bloqueios=new Map();
+let pacientes=[], selPac=null, pacEditId=null, pacFromForm=false;
+const G=id=>document.getElementById(id);
+const onlyDigits=v=>String(v||'').replace(/\D/g,'');
+function pacFromRow(r){return{id:r.id,nome:r.nome,cpf:r.cpf||'',cns:r.cns||'',phone:r.telefone||'',blood:r.tipo_sanguineo||'',gender:r.genero||''};}
+function pacToRow(p){return{nome:p.nome,cpf:p.cpf||null,cns:p.cns||null,telefone:p.phone||'',tipo_sanguineo:p.blood||'',genero:p.gender||''};}
+const pacById=id=>id?pacientes.find(p=>p.id===id)||null:null;
+function fmtCpf(d){return d?d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4'):'';}
+function fmtCns(d){return d?d.replace(/^(\d{3})(\d{4})(\d{4})(\d{4})$/,'$1 $2 $3 $4'):'';}
+function docLabel(p){return[p?.cpf&&'CPF '+fmtCpf(p.cpf),p?.cns&&'CNS '+fmtCns(p.cns)].filter(Boolean).join(' · ')||'Sem documento';}
+function cpfValid(d){
+  if(!/^\d{11}$/.test(d)||/^(\d)\1{10}$/.test(d))return false;
+  for(const n of[9,10]){let s=0;for(let i=0;i<n;i++)s+=+d[i]*(n+1-i);const dv=(s*10)%11%10;if(dv!==+d[n])return false;}
+  return true;
+}
+function cnsValid(d){
+  if(!/^[12789]\d{14}$/.test(d))return false;
+  let s=0;for(let i=0;i<15;i++)s+=+d[i]*(15-i);
+  return s%11===0;
+}
+// Busca por nome, protocolo, ou documento do cadastro vinculado.
+function matchesQuery(p,q){
+  const t=q.toLowerCase(),d=onlyDigits(q);
+  if((p.name||'').toLowerCase().includes(t)||(p.proto||'').toLowerCase().includes(t))return true;
+  const pc=pacById(p.pacienteId);
+  return d.length>=3&&!!pc&&(pc.cpf.includes(d)||pc.cns.includes(d));
+}
 // Ocupam vaga. Cancelado e Faltou liberam.
 const ATIVOS=['Confirmado','Pendente','Compareceu'];
 function isActive(p){return ATIVOS.includes(p.status);}
@@ -912,11 +980,13 @@ function dayClosed(ds){
 // ── Conversão linha do banco ⇄ objeto usado nas telas ──
 function fromRow(r){
   return{id:r.id,proto:r.proto||'',name:r.nome,dob:r.nascimento||'',apptDate:r.data,time:r.horario,service:r.servico,turn:r.turno,
-    gender:r.genero||'',blood:r.tipo_sanguineo||'',status:r.status,extra:r.info||'',phone:r.telefone||'',obs:r.obs||'',encaixe:!!r.encaixe,createdBy:r.criado_por||''};
+    gender:r.genero||'',blood:r.tipo_sanguineo||'',status:r.status,extra:r.info||'',phone:r.telefone||'',obs:r.obs||'',encaixe:!!r.encaixe,createdBy:r.criado_por||'',
+    pacienteId:r.paciente_id||'',serieId:r.serie_id||''};
 }
 function toRow(p){
   return{nome:p.name,nascimento:p.dob||null,data:p.apptDate,horario:p.time,servico:p.service,turno:p.turn,genero:p.gender||'',
-    tipo_sanguineo:p.blood||'',status:p.status,info:p.extra||'',telefone:p.phone||'',obs:p.obs||'',encaixe:!!p.encaixe};
+    tipo_sanguineo:p.blood||'',status:p.status,info:p.extra||'',telefone:p.phone||'',obs:p.obs||'',encaixe:!!p.encaixe,
+    paciente_id:p.pacienteId||null,serie_id:p.serieId||null};
 }
 function userFromRow(r){return{id:r.usuario,user:r.usuario,name:r.nome,role:r.papel,ativo:r.ativo,temConta:true};}
 // Mensagem legível para erros do servidor.
@@ -925,26 +995,29 @@ function dbMsg(e){
   if(m.startsWith('FECHADO:'))return`Não há atendimento nesse dia: ${m.slice(8)}. A agenda foi atualizada.`;
   if(m.startsWith('LOTADO:')){const[,u,x]=m.split(':');return`Este turno lotou nesse dia (${u}/${x} vagas). A agenda foi atualizada.`;}
   if(!navigator.onLine||/fetch|network/i.test(m))return'Sem conexão com o servidor. Nada foi salvo.';
+  if(/duplicate key|23505/i.test(m))return/cns/i.test(m)?'Já existe um paciente com este Cartão SUS. Busque-o pelo número.':/cpf/i.test(m)?'Já existe um paciente com este CPF. Busque-o pelo número.':'Registro duplicado.';
   if(/JWT|token/i.test(m))return'Sua sessão expirou. Entre novamente.';
   return m||'Erro ao falar com o servidor';
 }
 
 // ── Leitura e sincronização ──
 // O servidor devolve no máximo 1000 linhas por vez: busca em páginas.
-async function fetchPatients(){
+async function fetchAll(table,map){
   const out=[],PAGE=1000;
   for(let from=0;;from+=PAGE){
-    const{data,error}=await sb.from('ag_agendamentos').select('*').order('data').order('id').range(from,from+PAGE-1);
+    const{data,error}=await sb.from(table).select('*').order('id').range(from,from+PAGE-1);
     if(error)throw error;
-    out.push(...data.map(fromRow));
+    out.push(...data.map(map));
     if(data.length<PAGE)break;
   }
   return out;
 }
+function fetchPatients(){return fetchAll('ag_agendamentos',fromRow);}
 async function loadData(){
-  const[p,v,b]=await Promise.all([fetchPatients(),sb.from('ag_vagas').select('*').eq('id',1).single(),sb.from('ag_bloqueios').select('*').order('data')]);
+  const[p,v,b,pc]=await Promise.all([fetchPatients(),sb.from('ag_vagas').select('*').eq('id',1).single(),sb.from('ag_bloqueios').select('*').order('data'),
+    fetchAll('ag_pacientes',pacFromRow).catch(e=>{console.warn('Cadastro de pacientes indisponível',e);return null;})]);
   if(v.error)throw v.error;
-  patients=p;caps=normalizeCaps(v.data.caps);
+  patients=p;if(pc)pacientes=pc;caps=normalizeCaps(v.data.caps);
   diasSemana=Array.isArray(v.data.dias_semana)?v.data.dias_semana:[0,1,2,3,4,5,6];
   if(b.error)console.warn('Bloqueios indisponíveis',b.error);
   else bloqueios=new Map(b.data.map(x=>[x.data,x.motivo||'']));
@@ -970,6 +1043,7 @@ function startSync(){
     .on('postgres_changes',{event:'*',schema:'public',table:'ag_agendamentos'},queueSync)
     .on('postgres_changes',{event:'*',schema:'public',table:'ag_vagas'},queueSync)
     .on('postgres_changes',{event:'*',schema:'public',table:'ag_bloqueios'},queueSync)
+    .on('postgres_changes',{event:'*',schema:'public',table:'ag_pacientes'},queueSync)
     .subscribe();
   syncInterval=setInterval(syncNow,60000); // rede de segurança se o tempo real cair
 }
@@ -1202,7 +1276,7 @@ function periodBlock(turn,maxKey,list,showExtra){
     const marcar=canEdit()&&['Confirmado','Pendente'].includes(raw.status)&&effDate(raw)<=hoje()
       ?`<button class="rbtn" title="Compareceu" onclick="markStatus('${p.id}','Compareceu')">✅</button><button class="rbtn" title="Faltou" onclick="markStatus('${p.id}','Faltou')">🚫</button>`:'';
     const acts=canEdit()?`<div class="row-actions">${marcar}<button class="rbtn" onclick="openEdit('${p.id}')">✏️</button><button class="rbtn del" onclick="openDel('${p.id}')">🗑️</button></div>`:'';
-    return`<div class="ar"><span class="at2">${p.time}</span><div class="ai"><div class="an">${p.name}</div><div class="ap">Prot: ${p.proto}${extra}</div></div>${badge}${acts}</div>`;
+    return`<div class="ar"><span class="at2">${p.time}</span><div class="ai"><div class="an">${p.name}</div><div class="ap">Prot: ${p.proto}${extra}${raw.serieId?' · 🔁':''}</div></div>${badge}${acts}</div>`;
   }).join('');
   for(let i=0;i<Math.min(Math.max(0,max-used),2);i++)rows+=`<div class="ar" style="opacity:.3"><span class="at2">—</span><div class="ai"><div class="an" style="font-style:italic;color:var(--light)">Vaga disponível</div></div><span class="bv">Aberta</span></div>`;
   return`<div class="pblock"><div class="phdr2 ${cls}">${em} ${turn.toUpperCase()} · ${rng} · <strong>${used}/${max}</strong></div><div class="pbody">${rows}</div></div>`;
@@ -1327,7 +1401,7 @@ function renderPTable(){
   const fS=document.getElementById('f-svc')?.value||'';
   const fT=document.getElementById('f-st')?.value||'';
   const list=patients.filter(p=>
-    (!srch||(p.name||'').toLowerCase().includes(srch)||(p.proto||'').toLowerCase().includes(srch))
+    (!srch||matchesQuery(p,srch))
     &&(!fS||p.service===fS)&&(!fT||p.status===fT)
   ).sort(byDateTime);
   const tm={Transfusão:'st-t',Pediátrica:'st-p',Medicações:'st-m',Sangria:'st-s'};
@@ -1448,9 +1522,9 @@ function downloadFile(content,type,filename){
 function exportCSV(){
   const list=relPatients();
   if(!list.length){showToast('⚠️ Nenhum agendamento no período','warn');return;}
-  const header=['Data','Horário','Nome','Nascimento','Protocolo','Serviço','Turno','Gênero','Tipo Sanguíneo','Info Extra','Telefone','Observações','Status'];
+  const header=['Data','Horário','Nome','CPF','Cartão SUS','Nascimento','Protocolo','Serviço','Turno','Gênero','Tipo Sanguíneo','Info Extra','Telefone','Observações','Status'];
   const rows=list.map(p=>[
-    p.apptDate?dmy(p.apptDate):'',p.time,p.name,p.dob?dmy(p.dob):'',p.proto,p.service,p.turn,p.gender,p.blood,p.extra,p.phone,p.obs,p.status
+    p.apptDate?dmy(p.apptDate):'',p.time,p.name,fmtCpf(pacById(p.pacienteId)?.cpf||''),fmtCns(pacById(p.pacienteId)?.cns||''),p.dob?dmy(p.dob):'',p.proto,p.service,p.turn,p.gender,p.blood,p.extra,p.phone,p.obs,p.status
   ].map(csvCell).join(';'));
   const[ini,fim]=relRange();
   downloadFile('\ufeff'+[header.join(';'),...rows].join('\r\n'),'text/csv;charset=utf-8',`hemocentro_agendamentos_${ini}_a_${fim}.csv`);
@@ -1544,7 +1618,7 @@ async function saveCaps(){
 // ── Backup ──
 function exportBackup(){
   if(!isGestor())return;
-  const data={app:'hemocentro-agendamentos',version:2,exportedAt:new Date().toISOString(),patients,caps};
+  const data={app:'hemocentro-agendamentos',version:3,exportedAt:new Date().toISOString(),patients,pacientes,caps};
   downloadFile(JSON.stringify(data,null,2),'application/json',`hemocentro_backup_${hoje()}.json`);
   showToast('📤 Backup exportado. Guarde em local seguro.','ok');
 }
@@ -1620,22 +1694,19 @@ function openAddPatient(prefillId){
   if(denyEdit())return;
   editId=null;
   document.getElementById('m-title').textContent='Inserir Paciente';
-  ['m-name','m-time','m-extra','m-phone','m-obs'].forEach(id=>document.getElementById(id).value='');
+  ['m-time','m-extra','m-obs'].forEach(id=>document.getElementById(id).value='');
   // Agenda no dia aberto no dashboard; nunca sugere data passada
   const vd=todayStr(viewDate);
   document.getElementById('m-appt-date').value=vd>hoje()?vd:hoje();
   document.getElementById('m-svc').value='Transfusão';
   document.getElementById('m-turn').value='Manhã';
   document.getElementById('m-gender').value='Feminino';
-  document.getElementById('m-blood').value='';
   document.getElementById('m-status').value='Confirmado';
   const src=typeof prefillId==='string'?patients.find(x=>x.id===prefillId):null;
-  if(src){
-    document.getElementById('m-name').value=src.name||'';
-    document.getElementById('m-phone').value=src.phone||'';
-    document.getElementById('m-blood').value=src.blood||'';
-    if(src.gender)document.getElementById('m-gender').value=src.gender;
-  }
+  G('m-pac-hint').style.display='none';
+  setSelPac(pacById(src?.pacienteId));
+  if(src&&!selPac){G('m-pac-busca').value=src.name||'';if(src.gender)G('m-gender').value=src.gender;}
+  G('m-serie-w').style.display='block';G('m-serie').checked=false;
   updModal();
   document.getElementById('modal-pat').classList.add('open');
 }
@@ -1644,17 +1715,18 @@ function openEdit(id){
   const p=patients.find(x=>x.id===id);if(!p)return;
   editId=id;
   document.getElementById('m-title').textContent='Editar Agendamento';
-  document.getElementById('m-name').value=p.name||'';
   document.getElementById('m-appt-date').value=p.apptDate||hoje();
-  document.getElementById('m-phone').value=p.phone||'';
   document.getElementById('m-obs').value=p.obs||'';
   document.getElementById('m-svc').value=p.service||'Transfusão';
   document.getElementById('m-turn').value=p.turn||'Manhã';
   document.getElementById('m-time').value=p.time||'';
-  document.getElementById('m-gender').value=p.gender||'Feminino';
-  document.getElementById('m-blood').value=p.blood||'';
   document.getElementById('m-status').value=p.status||'Confirmado';
   document.getElementById('m-extra').value=p.extra||'';
+  setSelPac(pacById(p.pacienteId));
+  document.getElementById('m-gender').value=p.gender||'Feminino';
+  G('m-pac-hint').style.display=selPac?'none':'block';
+  if(!selPac)G('m-pac-busca').value=p.name||'';
+  G('m-serie-w').style.display='none';G('m-serie').checked=false;
   updModal();
   document.getElementById('modal-pat').classList.add('open');
 }
@@ -1665,6 +1737,133 @@ function updModal(){
   if(svc==='Medicações'){ew.style.display='block';el.textContent='Medicação';ei.placeholder='Ex: Deferoxamina';}
   else if(svc==='Pediátrica'){ew.style.display='block';el.textContent='Responsável';ei.placeholder='Nome do responsável';}
   else{ew.style.display='none';}
+  updSerie();
+}
+
+// ── Escolha do paciente no formulário ──
+function setSelPac(p){
+  selPac=p||null;
+  const sel=G('m-pac-sel'),bw=G('m-pac-busca-w');
+  G('m-pac-drop').classList.remove('open');
+  if(!selPac){sel.style.display='none';bw.style.display='block';G('m-pac-busca').value='';return;}
+  sel.innerHTML=`<div style="flex:1;min-width:0"><div class="pn">${esc(selPac.nome)}</div><div class="ap">${esc(docLabel(selPac))} · 📱 ${esc(selPac.phone||'sem telefone')} · 🩸 ${esc(selPac.blood||'—')}</div></div>`
+    +`<button type="button" class="ficha-btn" onclick="openPacModal(selPac.id,true)">✏️ Cadastro</button><button type="button" class="ficha-btn" onclick="setSelPac(null);G('m-pac-busca').focus()">Trocar</button>`;
+  sel.style.display='flex';bw.style.display='none';G('m-pac-hint').style.display='none';
+  if(selPac.gender)G('m-gender').value=selPac.gender;
+  updSerie();
+}
+function pacSearch(){
+  const q=G('m-pac-busca').value.trim(),drop=G('m-pac-drop');
+  const t=q.toLowerCase(),d=onlyDigits(q);
+  const res=(t.length>=2||d.length>=3)?pacientes.filter(p=>p.nome.toLowerCase().includes(t)||(d.length>=3&&(p.cpf.includes(d)||p.cns.includes(d)))).slice(0,8):[];
+  drop.innerHTML=res.map(p=>`<div class="sr-item" onmousedown="event.preventDefault();setSelPac(pacById('${p.id}'))"><div style="flex:1;min-width:0"><div class="sr-item-name">${esc(p.nome)}</div><div class="sr-item-sub">${esc(docLabel(p))}</div></div></div>`).join('')
+    +`<div class="sr-item" onmousedown="event.preventDefault();openPacModal(null,true)"><div class="sr-item-name" style="color:var(--T)">+ Cadastrar novo paciente${q?': '+esc(q):''}</div></div>`;
+  drop.classList.add('open');
+}
+function openPacModal(id,fromForm=false){
+  if(denyEdit())return;
+  pacEditId=id||null;pacFromForm=fromForm;
+  const p=pacById(id);
+  G('pc-title').textContent=p?'Editar Cadastro do Paciente':'Novo Paciente';
+  G('pc-nome').value=p?.nome||'';G('pc-cpf').value=fmtCpf(p?.cpf||'');G('pc-cns').value=fmtCns(p?.cns||'');
+  G('pc-tel').value=p?.phone||'';G('pc-blood').value=p?.blood||'';G('pc-genero').value=p?.gender||'';
+  if(!p&&fromForm){
+    const q=G('m-pac-busca').value.trim(),d=onlyDigits(q);
+    if(d.length===11&&d.length===q.replace(/[.\-\s]/g,'').length)G('pc-cpf').value=fmtCpf(d);
+    else if(d.length===15&&d.length===q.replace(/\s/g,'').length)G('pc-cns').value=fmtCns(d);
+    else G('pc-nome').value=q;
+    const svc=G('m-svc').value;
+    if(svc==='Transfusão'||svc==='Sangria')G('pc-genero').value=G('m-gender').value;
+  }
+  G('modal-pac').classList.add('open');
+  setTimeout(()=>G('pc-nome').focus(),50);
+}
+async function savePac(){
+  if(denyEdit()||busy)return;
+  const nome=G('pc-nome').value.trim(),cpf=onlyDigits(G('pc-cpf').value),cns=onlyDigits(G('pc-cns').value),phone=G('pc-tel').value.trim();
+  if(!nome){showToast('⚠️ Informe o nome do paciente','warn');return;}
+  if(cpf&&!cpfValid(cpf)){showToast('⚠️ CPF inválido: confira os números','warn');return;}
+  if(cns&&!cnsValid(cns)){showToast('⚠️ Cartão SUS inválido: confira os 15 números','warn');return;}
+  if(phone&&![10,11].includes(normPhone(phone).length)){showToast('⚠️ Telefone inválido: informe DDD e número','warn');return;}
+  const dupDoc=pacientes.find(p=>p.id!==pacEditId&&((cpf&&p.cpf===cpf)||(cns&&p.cns===cns)));
+  if(dupDoc){showToast(`⚠️ Este documento já é de ${dupDoc.nome}. Busque-o pelo número.`,'warn');return;}
+  if(!pacEditId&&pacientes.some(p=>p.nome.toLowerCase()===nome.toLowerCase())
+    &&!confirm(`Já existe paciente chamado "${nome}".\n\nOK = cadastrar outra pessoa com o mesmo nome\nCancelar = voltar e escolher o existente na busca`))return;
+  const row=pacToRow({nome,cpf,cns,phone,blood:G('pc-blood').value,gender:G('pc-genero').value});
+  const editando=pacEditId;
+  busy=true;
+  try{
+    const q=editando?sb.from('ag_pacientes').update(row).eq('id',editando):sb.from('ag_pacientes').insert(row);
+    const{data,error}=await q.select();
+    if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
+    if(!data?.length){showToast('❌ O cadastro não foi salvo: seu perfil não tem permissão','err');return;}
+    const saved=pacFromRow(data[0]);
+    pacientes=editando?pacientes.map(x=>x.id===saved.id?saved:x):[...pacientes,saved];
+    closeModal('modal-pac');
+    if(pacFromForm)setSelPac(saved);
+    showToast(editando?'✅ Cadastro atualizado (e os agendamentos futuros)':'✅ Paciente cadastrado','ok');
+  }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');return;}
+  finally{busy=false;}
+  if(editando)syncNow(); // o banco atualizou nome/telefone nos agendamentos futuros
+  else if(histRef)renderHistorico();
+}
+
+// ── Série ──
+function serieDates(){
+  const n=+G('m-serie-n').value,int=+G('m-serie-int').value,d0=G('m-appt-date').value;
+  if(!d0||!Number.isInteger(n)||n<2||n>12||!Number.isInteger(int)||int<1||int>90)return[];
+  const out=[],d=new Date(d0+'T12:00');
+  for(let i=0;i<n;i++){out.push(todayStr(d));d.setDate(d.getDate()+int);}
+  return out;
+}
+// Por que a data não tem vaga para este agendamento, ou null.
+function slotProblem(data,ds,excludeId){
+  const fechado=dayClosed(ds);
+  if(fechado)return fechado;
+  const k=getKey(data),max=getMax(k);
+  const used=patients.filter(p=>p.id!==excludeId&&effDate(p)===ds&&getKey(p)===k&&isActive(p)).length;
+  return used>=max?`lotado (${used}/${max})`:null;
+}
+function updSerie(){
+  const on=G('m-serie').checked&&G('m-serie-w').style.display!=='none';
+  G('m-serie-opts').style.display=on?'inline':'none';
+  const prev=G('m-serie-prev');
+  if(!on){prev.innerHTML='';return;}
+  const svc=G('m-svc').value;
+  const data={service:svc,turn:G('m-turn').value,gender:svc==='Pediátrica'?'':G('m-gender').value};
+  const ds=serieDates();
+  prev.innerHTML=ds.length?ds.map(d=>{const pb=slotProblem(data,d);return`<span class="serie-d${pb?' bad':''}" title="${esc(pb||'Vaga disponível')}">${dmy(d)}${pb?' ✕ '+esc(pb):''}</span>`;}).join('')
+    :'<span style="color:var(--danger);font-weight:700">Use intervalo de 1 a 90 dias e de 2 a 12 vezes</span>';
+}
+async function saveSerie(data){
+  const ds=serieDates();
+  if(!ds.length){showToast('⚠️ Use intervalo de 1 a 90 dias e de 2 a 12 vezes','warn');return;}
+  const probs=ds.map(d=>[d,slotProblem(data,d)]);
+  const bad=probs.filter(([,p])=>p);
+  const lista=probs.map(([d,p])=>`• ${dmy(d)}${p?' — '+p:''}`).join('\n');
+  let encaixar=false;
+  if(bad.length&&isGestor())
+    encaixar=confirm(`${bad.length} data(s) sem vaga ou sem atendimento:\n\n${lista}\n\nOK = agendar essas datas como encaixe\nCancelar = pular essas datas`);
+  const criar=encaixar?ds.length:ds.length-bad.length;
+  if(!criar){showToast('⚠️ Nenhuma data da série tem vaga. Fale com o gestor.','warn');return;}
+  if(!confirm(`Criar ${criar} agendamento(s) para ${data.name}?${bad.length&&!encaixar?`\n${bad.length} data(s) serão puladas.`:''}\n\n${lista}`))return;
+  const serieId='s'+Date.now().toString(36);
+  const ok=[],fail=[];
+  busy=true;
+  try{
+    for(const[d,p] of probs){
+      if(p&&!encaixar){fail.push(`${dmy(d)}: ${p}`);continue;}
+      const{data:rows,error}=await sb.from('ag_agendamentos').insert(toRow({...data,apptDate:d,encaixe:!!p,serieId})).select();
+      if(error||!rows?.length){fail.push(`${dmy(d)}: ${error?dbMsg(error):'não foi salvo'}`);continue;}
+      const saved=fromRow(rows[0]);
+      patients=[...patients,saved];ok.push(saved);
+    }
+  }catch(e){fail.push(dbMsg(e));}
+  finally{busy=false;}
+  closeModal('modal-pat');
+  refreshViews();
+  if(fail.length)alert(`${ok.length} agendamento(s) criado(s).\n\nNão criados:\n${fail.join('\n')}`);
+  else showToast(`✅ Série criada: ${ok.length} agendamentos (${ok[0].proto} a ${ok[ok.length-1].proto})`,'ok');
 }
 // Celular em dígitos, sem 0 inicial nem o 55 do país (DDD 55 com 11 dígitos é preservado).
 function normPhone(phone){
@@ -1674,30 +1873,28 @@ function normPhone(phone){
 }
 async function savePat(){
   if(denyEdit()||busy)return;
-  const name=document.getElementById('m-name').value.trim();
   const time=document.getElementById('m-time').value;
   const apptDate=document.getElementById('m-appt-date').value;
   const service=document.getElementById('m-svc').value;
   const turn=document.getElementById('m-turn').value;
   const status=document.getElementById('m-status').value;
-  const phone=document.getElementById('m-phone').value.trim();
   const showsExtra=service==='Medicações'||service==='Pediátrica';
-  if(!name){showToast('⚠️ Informe o nome do paciente','warn');return;}
+  if(!selPac){showToast('⚠️ Escolha o paciente na busca ou cadastre um novo','warn');G('m-pac-busca').focus();return;}
   if(!apptDate){showToast('⚠️ Informe a data do agendamento','warn');return;}
   if(!time){showToast('⚠️ Informe o horário','warn');return;}
   const[tIni,tFim]=turn==='Manhã'?['07:00','12:00']:['12:00','18:00'];
   if(time<tIni||time>tFim){showToast(`⚠️ Horário fora do turno da ${turn} (${tIni}–${tFim})`,'warn');return;}
-  if(phone&&![10,11].includes(normPhone(phone).length)){showToast('⚠️ Telefone inválido: informe DDD e número','warn');return;}
   const old=editId?patients.find(x=>x.id===editId):null;
   const data={
     // O formulário não pede mais nascimento; na edição, preserva o que já existia.
-    name,time,dob:old?.dob||'',apptDate,service,turn,status,phone,
+    name:selPac.nome,time,dob:old?.dob||'',apptDate,service,turn,status,phone:selPac.phone,
     gender:service==='Pediátrica'?'':document.getElementById('m-gender').value,
-    blood:document.getElementById('m-blood').value,
+    blood:selPac.blood,pacienteId:selPac.id,serieId:old?.serieId||'',
     extra:showsExtra?document.getElementById('m-extra').value.trim():'',
     obs:document.getElementById('m-obs').value.trim(),
     encaixe:!!old?.encaixe,
   };
+  if(!old&&G('m-serie').checked){await saveSerie(data);return;}
   // Aviso rápido. Quem decide de verdade é o banco, que evita duas reservas na mesma vaga.
   // Mesma regra do banco: marcar Compareceu/Faltou não reabre a checagem.
   const slotChanged=!old||old.apptDate!==apptDate||old.service!==service||old.turn!==turn||old.gender!==data.gender
@@ -1730,7 +1927,7 @@ async function savePat(){
     const saved=fromRow(rows[0]);
     patients=old?patients.map(x=>x.id===saved.id?saved:x):[...patients,saved];
     showToast(old?'✅ Agendamento atualizado!':`✅ Paciente inserido! Protocolo ${saved.proto}`,'ok');
-    if(histRef&&histRef.id===saved.id){histRef.name=saved.name;histRef.dob=saved.dob;}
+    if(histRef&&histRef.id===saved.id){histRef.name=saved.name;histRef.dob=saved.dob;histRef.pacienteId=saved.pacienteId;}
     closeModal('modal-pat');
     refreshViews();
   }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');}
@@ -1742,6 +1939,10 @@ function openDel(id){
   delId=id;
   document.getElementById('del-name').textContent=p.name;
   document.getElementById('del-info').textContent=`${p.service} · ${p.turn} · ${p.time} · ${p.proto}`;
+  const prox=serieSiblings(p);
+  G('del-serie').checked=false;
+  G('del-serie-w').style.display=prox.length?'flex':'none';
+  G('del-serie-l').textContent=`Excluir também os próximos ${prox.length} agendamento(s) desta série`;
   document.getElementById('modal-del').classList.add('open');
 }
 async function markStatus(id,st){
@@ -1795,16 +1996,23 @@ async function delBloqueio(d){
   if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Não foi possível desbloquear'}`,'err');return;}
   bloqueios.delete(d);renderDias();renderDashboard();showToast('✅ Data desbloqueada','ok');
 }
+// Agendamentos seguintes da mesma série (a partir da data deste).
+function serieSiblings(p){
+  return p.serieId?patients.filter(x=>x.serieId===p.serieId&&x.id!==p.id&&effDate(x)>=effDate(p)):[];
+}
 async function confirmDel(){
   if(denyEdit()||busy)return;
   busy=true;
   try{
-    const{data,error}=await sb.from('ag_agendamentos').delete().eq('id',delId).select();
+    const p=patients.find(x=>x.id===delId);
+    const ids=[delId,...(p&&G('del-serie').checked?serieSiblings(p).map(x=>x.id):[])];
+    const{data,error}=await sb.from('ag_agendamentos').delete().in('id',ids).select();
     if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
     if(!data?.length){showToast('❌ Nada foi excluído: o registro já não existe ou seu perfil não tem permissão','err');syncNow();return;}
-    patients=patients.filter(x=>x.id!==delId);
+    const apagados=new Set(data.map(r=>r.id));
+    patients=patients.filter(x=>!apagados.has(x.id));
     closeModal('modal-del');
-    showToast('🗑️ Paciente removido','warn');
+    showToast(apagados.size>1?`🗑️ ${apagados.size} agendamentos removidos`:'🗑️ Agendamento removido','warn');
     refreshViews();
   }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');}
   finally{busy=false;}
@@ -1964,7 +2172,7 @@ function showToast(msg,type='ok'){
 function globalSearch(q){
   const drop=document.getElementById('search-drop');
   if(!q||q.length<2){drop.classList.remove('open');return;}
-  const results=patients.filter(p=>(p.name||'').toLowerCase().includes(q.toLowerCase())||(p.proto||'').toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  const results=patients.filter(p=>matchesQuery(p,q)).sort((a,b)=>effDate(b).localeCompare(effDate(a))).slice(0,8);
   if(!results.length){
     drop.innerHTML='<div class="sr-empty">Nenhum paciente encontrado</div>';
     drop.classList.add('open');return;
@@ -1991,14 +2199,16 @@ function closeGlobalSearch(){
 // ══════════════════════════════════════════════
 const HIST_EMPTY='<div style="text-align:center;padding:40px;color:var(--light)">Busque um paciente pelo nome na barra lateral</div>';
 // Homônimos: mesmo nome só é a mesma pessoa se o nascimento não divergir.
+// Com cadastro, o vínculo decide. Agendamentos antigos sem cadastro entram pelo nome.
 function samePatient(x,ref){
+  if(ref.pacienteId&&x.pacienteId)return x.pacienteId===ref.pacienteId;
   return(x.name||'').toLowerCase()===(ref.name||'').toLowerCase()&&(!x.dob||!ref.dob||x.dob===ref.dob);
 }
 function openHistorico(patientId){
   closeGlobalSearch();
   const p=patients.find(x=>x.id===patientId);
   if(!p) return;
-  histRef={id:p.id,name:p.name,dob:p.dob};
+  histRef={id:p.id,name:p.name,dob:p.dob,pacienteId:p.pacienteId};
   renderHistorico();
   showPage('historico');
 }
@@ -2015,6 +2225,7 @@ function renderHistorico(){
   }
   const rawP=history.find(x=>x.id===histRef.id)||history[0];
   histRef.id=rawP.id;
+  const pac=pacById(rawP.pacienteId);
   const p=escObj(rawP);
   if(sub) sub.textContent=`${history.length} agendamento(s) encontrado(s)`;
   const ok=history.filter(x=>x.status==='Confirmado').length;
@@ -2053,6 +2264,7 @@ function renderHistorico(){
       <div style="flex:1;min-width:0">
         <div class="hist-name">${p.name}</div>
         <div class="hist-meta">📱 ${phoneDisplay} · 🩸 ${p.blood||'—'}${p.dob?` · Nasc: ${dmy(p.dob)}`:''}</div>
+        <div class="hist-meta">🪪 ${esc(pac?docLabel(pac):'Sem cadastro vinculado')}</div>
         <div class="hist-stats">
           <div class="hist-stat"><div class="v">${history.length}</div><div class="l">Total</div></div>
           <div class="hist-stat"><div class="v" style="color:#86efac">${ok}</div><div class="l">Confirm.</div></div>
@@ -2060,6 +2272,7 @@ function renderHistorico(){
         </div>
         <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
           ${whatsLink}${smsLink}
+          ${ed&&pac?`<button class="whatsapp-btn" style="background:#0f766e" onclick="openPacModal('${pac.id}')">🪪 Cadastro</button>`:''}
           ${ed?`<button class="whatsapp-btn" style="background:#f1f5f9;color:#374151" onclick="openAddPatient('${p.id}')">+ Novo Agend.</button>`:''}
         </div>
       </div>
@@ -2139,6 +2352,7 @@ function printFicha(id){
   <div class="section"><h3>Dados do Paciente</h3>
     <div class="row"><span class="lbl">Nome completo</span><span class="val">${p.name}</span></div>
     ${p.dob?`<div class="row"><span class="lbl">Data de nascimento</span><span class="val">${dmy(p.dob)}</span></div>`:''}
+    ${(()=>{const pc=pacById(raw.pacienteId);return pc?`<div class="row"><span class="lbl">Documento</span><span class="val">${esc(docLabel(pc))}</span></div>`:'';})()}
     <div class="row"><span class="lbl">Tipo sanguíneo</span><span class="val">${p.blood||'—'}</span></div>
     <div class="row"><span class="lbl">Telefone</span><span class="val">${p.phone||'—'}</span></div>
   </div>
@@ -2160,6 +2374,52 @@ function printFicha(id){
   const w=window.open('','_blank');
   if(w){w.document.write(html);w.document.close();}
   else showToast('⚠️ Permita pop-ups para imprimir ficha','warn');
+}
+
+// ══════════════════════════════════════════════
+//  LISTA DO DIA (IMPRESSÃO)
+// ══════════════════════════════════════════════
+function printDayList(){
+  const ds=todayStr(viewDate);
+  const list=patientsForDate(viewDate).filter(p=>p.status!=='Cancelado').sort(byDateTime);
+  if(!list.length){showToast('⚠️ Nenhum agendamento neste dia','warn');return;}
+  const fechado=dayClosed(ds);
+  const grupos=[['Transfusão',true],['Pediátrica',false],['Medicações',false],['Sangria',true]];
+  let body='',n=0;
+  for(const[svc,porGen] of grupos)for(const t of['Manhã','Tarde'])for(const g of(porGen?['Feminino','Masculino']:[''])){
+    const l=list.filter(p=>p.service===svc&&p.turn===t&&(!porGen||(g==='Feminino')===(p.gender==='Feminino')));
+    if(!l.length)continue;
+    n+=l.length;
+    body+=`<h3>${svc} · ${t}${g?' · '+g:''} <span>(${l.length})</span></h3><table><thead><tr><th>Hora</th><th>Paciente</th><th>Prot.</th><th>Documento</th><th>Tipo</th><th>${svc==='Medicações'?'Medicação':svc==='Pediátrica'?'Responsável':'Obs.'}</th><th>Telefone</th><th>Status</th><th class="c">Presente</th></tr></thead><tbody>`
+      +l.map(raw=>{const p=escObj(raw),pc=pacById(raw.pacienteId);
+        const tags=[raw.encaixe&&'encaixe',raw.serieId&&'série'].filter(Boolean).join(', ');
+        const info=[p.extra,p.obs].filter(Boolean).join(' · ');
+        return`<tr><td><strong>${p.time}</strong></td><td><strong>${p.name}</strong>${tags?` <em>(${tags})</em>`:''}</td><td>${p.proto}</td><td>${esc(pc?docLabel(pc):'—')}</td><td>${p.blood||'—'}</td><td>${info||'—'}</td><td>${p.phone||'—'}</td><td>${p.status}</td><td class="c">☐</td></tr>`;}).join('')
+      +`</tbody></table>`;
+  }
+  const d=new Date();
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Lista do dia ${dmy(ds)}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:18px;color:#111;}
+    h1{font-size:17px;margin:0;color:#1e40af;}h2{font-size:12px;color:#64748b;font-weight:normal;margin:4px 0 14px;}
+    h3{font-size:12px;margin:16px 0 6px;color:#1e40af;text-transform:uppercase;letter-spacing:.04em;}h3 span{color:#64748b;}
+    .aviso{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:8px 10px;border-radius:6px;font-size:11px;font-weight:bold;}
+    table{width:100%;border-collapse:collapse;font-size:10.5px;}
+    th{background:#eff6ff;text-align:left;padding:5px 7px;border-bottom:2px solid #bfdbfe;font-size:9.5px;text-transform:uppercase;}
+    td{padding:6px 7px;border-bottom:1px solid #e2e8f0;vertical-align:top;}
+    .c{text-align:center;width:52px;font-size:14px;}em{color:#9a3412;font-style:normal;font-size:9.5px;}
+    tr{break-inside:avoid;}
+    @media print{body{padding:6px;}}
+  </style></head><body>
+  <h1>🩸 Hemocentro de João Pessoa — Lista do dia</h1>
+  <h2>${dmy(ds)}, ${DIAS[new Date(ds+'T12:00').getDay()]} · ${n} agendamento(s) · Impresso em ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} às ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} por ${esc(curUser?.name)}</h2>
+  ${fechado?`<div class="aviso">Atenção: dia marcado sem atendimento (${esc(fechado)}).</div>`:''}
+  ${body}
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+  const w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else showToast('⚠️ Permita pop-ups para imprimir a lista','warn');
 }
 
 // ══════════════════════════════════════════════

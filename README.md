@@ -10,6 +10,7 @@ Agendamento de transfusão, transfusão pediátrica, medicações e sangria tera
 - `supabase/002_gestor_inicial.sql` — cria o gestor inicial (fora do git)
 - `supabase/003_trava_vagas.sql` — ajuste da trava de reservas simultâneas
 - `supabase/004_dias_e_comparecimento.sql` — dias de atendimento, datas bloqueadas e status Compareceu/Faltou
+- `supabase/005_pacientes_e_series.sql` — cadastro único de pacientes e agendamentos em série
 
 Não precisa de compilação. Qualquer hospedagem estática com HTTPS serve (GitHub Pages, Netlify).
 
@@ -22,6 +23,7 @@ Supabase `ohuaoncwgioawgptyqgz`, compartilhado com outros apps. Este usa só as 
 | `ag_agendamentos` | Agendamentos |
 | `ag_vagas` | Vagas por serviço e turno, e dias da semana com atendimento |
 | `ag_bloqueios` | Feriados e outras datas sem atendimento |
+| `ag_pacientes` | Cadastro único: nome, CPF, Cartão SUS, telefone, tipo sanguíneo, gênero |
 | `ag_usuarios` | Quem tem acesso e com qual perfil |
 | `ag_codigos` | Códigos de primeiro acesso (só o hash; ninguém lê pela API) |
 | `ag_historico` | Quem mudou o quê, com o antes e o depois de cada registro |
@@ -51,6 +53,11 @@ Depois do envio completo, ele oferece apagar a cópia local. Quem tiver um arqui
 - Só se agenda nos **dias de atendimento** (padrão: segunda a sexta) e fora das **datas bloqueadas**,
   ambos configurados no Painel do Gestor (`ag_vagas.dias_semana` e `ag_bloqueios`). O gestor pode encaixar fora deles.
 - Marcar Compareceu/Faltou não reabre a checagem de vagas; reativar um cancelado ou faltoso, sim.
+- Todo agendamento novo é de um paciente do cadastro. CPF e Cartão SUS são opcionais, mas únicos e validados.
+  O agendamento copia nome, telefone e tipo sanguíneo do cadastro; editar o cadastro atualiza os agendamentos de hoje em diante.
+- Série: de 2 a 12 repetições, a cada 1 a 90 dias. Cada data passa pelas mesmas regras de vagas e dias;
+  as datas sem vaga são puladas (ou, para o gestor, viram encaixe se ele escolher).
+- Importar backup restaura agendamentos, mas não o cadastro de pacientes.
 - Quem garante as vagas é o banco, inclusive quando duas pessoas reservam ao mesmo tempo.
 - Com o turno lotado, a recepção é bloqueada; o gestor pode autorizar um encaixe.
 - Manhã aceita horários das 07:00 às 12:00; Tarde, das 12:00 às 18:00.
