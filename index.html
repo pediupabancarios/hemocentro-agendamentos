@@ -522,6 +522,26 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .ar.vaga.livre{opacity:1;cursor:pointer;border-radius:8px;}
 .ar.vaga.livre .an{color:var(--T)!important;font-style:normal!important;font-weight:700;}
 .ar.vaga.livre:hover{background:#eff6ff;}
+.lem-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;}
+.lem-row:last-child{border-bottom:none;}
+.lem-row.ok{background:#f0fdf4;}
+.lem-st{font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:12px;white-space:nowrap;}
+.lem-st.ok{background:#d1fae5;color:#065f46;}
+.lem-st.no{background:#fef3c7;color:#92400e;}
+.lem-acts{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto;}
+.lem-btn{border:none;border-radius:8px;padding:6px 10px;font-family:inherit;font-size:.72rem;font-weight:700;cursor:pointer;color:#fff;}
+.lem-sum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:.78rem;font-weight:700;}
+.lem-sum span{background:#f1f5f9;border-radius:10px;padding:6px 10px;}
+.esp-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;}
+.esp-row.livre{background:#f0fdf4;}
+.esp-row:last-child{border-bottom:none;}
+.espera-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;cursor:pointer;}
+.rem-dia{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.rem-dia:last-child{border-bottom:none;}
+.rem-dia .d{flex:1;font-size:.82rem;font-weight:700;}
+.rem-op{border:1.5px solid #bbf7d0;background:#f0fdf4;color:#065f46;border-radius:9px;padding:6px 10px;font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;}
+.rem-op:hover{background:#dcfce7;}
+.rem-op:disabled{border-color:var(--border);background:#f8fafc;color:#cbd5e1;cursor:default;}
 /* ══ FILTRO DO DASHBOARD ══ */
 .filter-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;}
 .filter-banner button{background:#fff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
@@ -597,6 +617,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <div class="ni active" data-page="dashboard" onclick="clearDashFilter();showPage('dashboard')"><span class="nil"><span class="ico">🏠</span>Início</span></div>
       <div class="ni" data-page="patients" onclick="showPage('patients')"><span class="nil"><span class="ico">📅</span>Agendamentos</span></div>
       <div class="ni" data-page="cadastro" onclick="showPage('cadastro')"><span class="nil"><span class="ico">👥</span>Pacientes</span></div>
+      <div class="ni" data-page="lembretes" onclick="showPage('lembretes')"><span class="nil"><span class="ico">📨</span>Lembretes</span></div>
+      <div class="ni" data-page="espera" onclick="showPage('espera')"><span class="nil"><span class="ico">⏳</span>Lista de espera <span id="esp-badge" style="display:none;background:#d97706;color:#fff;border-radius:10px;font-size:.58rem;padding:1px 6px;font-weight:800;margin-left:4px">0</span></span></div>
       <div class="ns">Acompanhamento</div>
       <div class="ni" data-page="relatorios" onclick="showPage('relatorios')"><span class="nil"><span class="ico">📊</span>Relatórios</span></div>
       <div class="ni" data-page="alertas" onclick="showPage('alertas')"><span class="nil"><span class="ico">🔔</span>Alertas <span id="alert-count-badge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;font-size:.58rem;padding:1px 5px;font-weight:800;margin-left:4px">0</span></span></div>
@@ -808,6 +830,18 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
 
     <!-- HISTÓRICO -->
+    <div id="page-lembretes" class="page">
+      <div class="page-hdr"><div><h2>📨 Lembretes</h2><p>Avise os pacientes do próximo dia de atendimento</p></div>
+        <div style="display:flex;gap:6px;align-items:center"><input type="date" id="lem-data" onchange="renderLembretes()" style="padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.82rem;background:#fff"/></div></div>
+      <div class="panel"><div class="lem-sum" id="lem-sum"></div><div id="lem-list"></div></div>
+    </div>
+
+    <div id="page-espera" class="page">
+      <div class="page-hdr"><div><h2>⏳ Lista de espera</h2><p>Pacientes aguardando vaga num turno que estava lotado</p></div></div>
+      <div class="panel"><div id="esp-list"></div>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:10px;line-height:1.5">Para colocar alguém na fila: tente agendar num turno lotado e escolha "Lista de espera". Quando abrir vaga, o paciente aparece em verde aqui e nos Alertas.</p></div>
+    </div>
+
     <div id="page-cadastro" class="page">
       <div class="page-hdr"><div><h2>👥 Pacientes</h2><p>Cadastro único: busque pelo nome, CPF ou Cartão SUS</p></div><button class="btn-add can-edit" onclick="openPacModal(null)">+ Novo Paciente</button></div>
       <div class="panel">
@@ -902,6 +936,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
 </div>
 
+<!-- MODAL: REMARCAR -->
+<div class="modal-bg" id="modal-rem">
+  <div class="modal">
+    <h2>📆 Remarcar</h2><p class="msub" id="rem-sub">—</p>
+    <div id="rem-list" style="max-height:52vh;overflow-y:auto"></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-rem')">Fechar</button></div>
+  </div>
+</div>
+
 <!-- MODAL: ENVIAR AGENDA -->
 <div class="modal-bg" id="modal-envio">
   <div class="modal">
@@ -984,6 +1027,8 @@ let calY=new Date().getFullYear(), calM=new Date().getMonth();
 let dashFilter=null, histRef=null, capsDraft=null, busy=false;
 let diasSemana=[0,1,2,3,4,5,6], bloqueios=new Map();
 let pacientes=[], selPac=null, pacEditId=null, pacFromForm=false;
+let espera=[], esperaAgendandoId=null;
+function espFromRow(r){return{id:r.id,pacienteId:r.paciente_id,apptDate:r.data,service:r.servico,turn:r.turno,gender:r.genero||'',obs:r.obs||'',criadoPor:r.criado_por||'',criadoEm:r.criado_em};}
 const G=id=>document.getElementById(id);
 const onlyDigits=v=>String(v||'').replace(/\D/g,'');
 function pacFromRow(r){return{id:r.id,nome:r.nome,cpf:r.cpf||'',cns:r.cns||'',phone:r.telefone||'',email:r.email||'',blood:r.tipo_sanguineo||'',gender:r.genero||''};}
@@ -1025,7 +1070,7 @@ function dayClosed(ds){
 function fromRow(r){
   return{id:r.id,proto:r.proto||'',name:r.nome,dob:r.nascimento||'',apptDate:r.data,time:r.horario,service:r.servico,turn:r.turno,
     gender:r.genero||'',blood:r.tipo_sanguineo||'',status:r.status,extra:r.info||'',phone:r.telefone||'',obs:r.obs||'',encaixe:!!r.encaixe,createdBy:r.criado_por||'',
-    pacienteId:r.paciente_id||'',serieId:r.serie_id||''};
+    pacienteId:r.paciente_id||'',serieId:r.serie_id||'',lembreteEm:r.lembrete_em||'',lembretePor:r.lembrete_por||''};
 }
 function toRow(p){
   return{nome:p.name,nascimento:p.dob||null,data:p.apptDate,horario:p.time||null,servico:p.service,turno:p.turn,genero:p.gender||'',
@@ -1061,7 +1106,8 @@ async function loadData(){
   const[p,v,b,pc]=await Promise.all([fetchPatients(),sb.from('ag_vagas').select('*').eq('id',1).single(),sb.from('ag_bloqueios').select('*').order('data'),
     fetchAll('ag_pacientes',pacFromRow).catch(e=>{console.warn('Cadastro de pacientes indisponível',e);return null;})]);
   if(v.error)throw v.error;
-  patients=p;if(pc)pacientes=pc;caps=normalizeCaps(v.data.caps);
+  patients=p;if(pc)pacientes=pc;
+  try{espera=await fetchAll('ag_espera',espFromRow);}catch(e){console.warn('Lista de espera indisponível',e);}caps=normalizeCaps(v.data.caps);
   diasSemana=Array.isArray(v.data.dias_semana)?v.data.dias_semana:[0,1,2,3,4,5,6];
   if(b.error)console.warn('Bloqueios indisponíveis',b.error);
   else bloqueios=new Map(b.data.map(x=>[x.data,x.motivo||'']));
@@ -1088,6 +1134,7 @@ function startSync(){
     .on('postgres_changes',{event:'*',schema:'public',table:'ag_vagas'},queueSync)
     .on('postgres_changes',{event:'*',schema:'public',table:'ag_bloqueios'},queueSync)
     .on('postgres_changes',{event:'*',schema:'public',table:'ag_pacientes'},queueSync)
+    .on('postgres_changes',{event:'*',schema:'public',table:'ag_espera'},queueSync)
     .subscribe();
   syncInterval=setInterval(syncNow,60000); // rede de segurança se o tempo real cair
 }
@@ -1324,7 +1371,8 @@ function periodBlock(turn,maxKey,list,showExtra){
     const extra=showExtra&&p.extra?` · ${p.extra}`:p.blood?` · ${p.blood}`:'';
     const marcar=canEdit()&&['Confirmado','Pendente'].includes(raw.status)&&effDate(raw)<=hoje()
       ?`<button class="rbtn" title="Compareceu" onclick="markStatus('${p.id}','Compareceu')">✅</button><button class="rbtn" title="Faltou" onclick="markStatus('${p.id}','Faltou')">🚫</button>`:'';
-    const acts=canEdit()?`<div class="row-actions">${marcar}<button class="rbtn" onclick="openEdit('${p.id}')">✏️</button><button class="rbtn del" onclick="openDel('${p.id}')">🗑️</button></div>`:'';
+    const remarcar=canEdit()&&['Confirmado','Pendente','Faltou'].includes(raw.status)?`<button class="rbtn" title="Remarcar" onclick="openRemarcar('${p.id}')">📆</button>`:'';
+    const acts=canEdit()?`<div class="row-actions">${marcar}${remarcar}<button class="rbtn" onclick="openEdit('${p.id}')">✏️</button><button class="rbtn del" onclick="openDel('${p.id}')">🗑️</button></div>`:'';
     return`<div class="ar"><span class="at2" title="Ordem no turno">${idx+1}º</span><div class="ai"><div class="an">${p.name}</div><div class="ap">Prot: ${p.proto}${extra}${raw.serieId?' · 🔁':''}</div></div>${badge}${acts}</div>`;
   }).join('');
   for(let i=0;i<Math.min(Math.max(0,max-used),2);i++)rows+=canEdit()&&!dayClosed(todayStr(viewDate))
@@ -1396,6 +1444,8 @@ function renderApptList(){
   let html='';
   const fechado=dayClosed(todayStr(viewDate));
   if(fechado)html+=`<div class="closed-banner">🚫 Sem atendimento neste dia: ${esc(fechado)}</div>`;
+  const naFila=espera.filter(e=>e.apptDate===todayStr(viewDate)).length;
+  if(naFila)html+=`<div class="espera-banner" onclick="showPage('espera')"><span>⏳ ${naFila} paciente(s) na lista de espera para este dia</span><span>Ver →</span></div>`;
   if(f)html+=`<div class="filter-banner"><span>Mostrando só: ${[f.svc,f.gender,f.turn].filter(Boolean).join(' · ')}</span><button onclick="clearDashFilter();showPage('dashboard')">Ver todos os serviços</button></div>`;
   svcs.forEach(s=>{
     html+=`<span class="slbl3" style="color:${s.color}">${s.label}</span>`;
@@ -1502,7 +1552,7 @@ function renderPTable(){
   const ed=canEdit();
   tb.innerHTML=list.map(raw=>{
     const p=escObj(raw);
-    const editBtn=ed?`<button class="tbl-act" onclick="openEdit('${p.id}')" title="Editar">✏️</button>`:'';
+    const editBtn=ed?`<button class="tbl-act" onclick="openEdit('${p.id}')" title="Editar">✏️</button>${['Confirmado','Pendente','Faltou'].includes(raw.status)?`<button class="tbl-act" onclick="openRemarcar('${p.id}')" title="Remarcar">📆</button>`:''}`:'';
     const delBtn=ed?`<button class="tbl-act del" onclick="openDel('${p.id}')" title="Excluir">🗑️</button>`:'';
     return`<tr><td style="font-size:.72rem;color:var(--muted);white-space:nowrap">${dmy(p.apptDate)}</td><td><div class="td-name" style="cursor:pointer;color:var(--T)" onclick="openHistorico('${p.id}')">${p.name}</div></td><td class="td-proto">${p.proto||'—'}</td><td><span class="stag ${tm[raw.service]||''}">${p.service}</span></td><td>${p.turn}</td><td>${p.gender||'—'}</td><td style="font-size:.69rem;color:var(--muted)">${p.blood||''}${p.extra?' · '+p.extra:''}</td><td>${statusBadge(raw.status)}</td><td><div style="display:flex;gap:3px;flex-wrap:wrap">${editBtn}<button class="tbl-act" onclick="openHistorico('${p.id}')" title="Histórico">📋</button><button class="tbl-act" onclick="sendWhatsAppById('${p.id}')" title="WhatsApp" style="color:#25D366">💬</button><button class="tbl-act" onclick="printFicha('${p.id}')" title="Ficha">🖨️</button>${delBtn}</div></td></tr>`;
   }).join('');
@@ -1816,7 +1866,7 @@ async function sendLegacy(){
 // ══════════════════════════════════════════════
 function openAddPatient(prefillId){
   if(denyEdit())return;
-  editId=null;
+  editId=null;esperaAgendandoId=null;
   document.getElementById('m-title').textContent='Inserir Paciente';
   ['m-extra','m-obs'].forEach(id=>document.getElementById(id).value='');
   // Agenda no dia aberto no dashboard; nunca sugere data passada
@@ -2090,8 +2140,15 @@ async function savePat(){
     if(used>=max)motivos.push(`${service} · ${turn} em ${dmy(apptDate)} está lotado (${used}/${max}).`);
     if(motivos.length){
       const msg=motivos.join(' ');
-      if(!isGestor()){showToast(`⚠️ ${msg} Fale com o gestor.`,'warn');return;}
-      if(!confirm(`${msg}\n\nAutorizar como encaixe?`))return;
+      const soLotado=!fechado;
+      if(!isGestor()){
+        if(soLotado&&!old){await offerEspera(data,msg);return;}
+        showToast(`⚠️ ${msg} Fale com o gestor.`,'warn');return;
+      }
+      if(!confirm(`${msg}\n\nAutorizar como encaixe?`)){
+        if(soLotado&&!old)await offerEspera(data,msg);
+        return;
+      }
       data.encaixe=true;
     }
   }
@@ -2108,6 +2165,8 @@ async function savePat(){
     const saved=fromRow(rows[0]);
     patients=old?patients.map(x=>x.id===saved.id?saved:x):[...patients,saved];
     showToast(old?'✅ Agendamento atualizado!':`✅ Paciente inserido! Protocolo ${saved.proto}`,'ok');
+    if(!old&&esperaAgendandoId){removeEspera(esperaAgendandoId,true);}
+    esperaAgendandoId=null;
     if(histRef&&histRef.id===saved.id){histRef.name=saved.name;histRef.dob=saved.dob;histRef.pacienteId=saved.pacienteId;}
     closeModal('modal-pat');
     refreshViews();
@@ -2126,6 +2185,156 @@ function openDel(id){
   G('del-serie-l').textContent=`Excluir também os próximos ${prox.length} agendamento(s) desta série`;
   document.getElementById('modal-del').classList.add('open');
 }
+// ══ Lembretes da véspera ══
+function proximoDiaAtendimento(){
+  const d=new Date();
+  for(let i=1;i<=31;i++){d.setDate(d.getDate()+1);const ds=todayStr(d);if(!dayClosed(ds))return ds;}
+  const t=new Date();t.setDate(t.getDate()+1);return todayStr(t);
+}
+function lembreteMsg(a){
+  const dia=DIAS[new Date(effDate(a)+'T12:00').getDay()].toLowerCase();
+  return`Olá ${a.name}! 😊
+
+🩸 *Hemocentro de João Pessoa*
+Lembrete do seu agendamento:
+
+📅 *${dmy(a.apptDate)} (${dia})*
+📋 Serviço: *${a.service}*
+🕐 Turno: *${turnoTxt(a)}*
+
+Por favor, chegue com 15 minutos de antecedência.
+✅ Responda SIM para confirmar ou NÃO se não puder vir.`;
+}
+function renderLembretes(){
+  const ds=G('lem-data').value||proximoDiaAtendimento();
+  const lista=patients.filter(p=>effDate(p)===ds&&['Confirmado','Pendente'].includes(p.status)).sort(byDateTime);
+  const ok=lista.filter(a=>a.lembreteEm).length;
+  const fechado=dayClosed(ds);
+  G('lem-sum').innerHTML=`<span>📅 ${dmy(ds)} · ${DIAS[new Date(ds+'T12:00').getDay()]}</span><span style="color:#065f46">✔ ${ok} avisado(s)</span><span style="color:#92400e">⏳ ${lista.length-ok} por avisar</span>${fechado?`<span style="color:#991b1b">🚫 ${esc(fechado)}</span>`:''}`;
+  if(!lista.length){G('lem-list').innerHTML='<div style="text-align:center;padding:24px;color:var(--light);font-size:.82rem">Nenhum agendamento confirmado ou pendente neste dia.</div>';return;}
+  const ed=canEdit();
+  G('lem-list').innerHTML=lista.map(raw=>{
+    const a=escObj(raw);
+    const tel=[10,11].includes(normPhone(phoneOf(raw)).length),mail=emailOk(emailOf(raw));
+    const hora=raw.lembreteEm?new Date(raw.lembreteEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    const st=raw.lembreteEm?`<span class="lem-st ok">✔ Avisado ${hora}${raw.lembretePor?' · '+esc(raw.lembretePor):''}</span>`:'<span class="lem-st no">Não avisado</span>';
+    const btns=ed?`${tel?`<button class="lem-btn" style="background:#128C7E" onclick="lembrar('${a.id}','whats')">💬 WhatsApp</button>`:''}${mail?`<button class="lem-btn" style="background:#2563eb" onclick="lembrar('${a.id}','email')">✉️ E-mail</button>`:''}${!tel&&!mail?'<span style="font-size:.68rem;color:var(--danger);font-weight:700">Sem contato no cadastro</span>':''}<button class="lem-btn" style="background:${raw.lembreteEm?'#94a3b8':'#059669'}" onclick="marcarLembrete('${a.id}',${!raw.lembreteEm})">${raw.lembreteEm?'Desmarcar':'✔ Marcar avisado'}</button>`:'';
+    return`<div class="lem-row${raw.lembreteEm?' ok':''}"><div style="min-width:0;flex:1"><div class="an">${a.name}</div><div class="ap">${a.service} · ${esc(turnoTxt(raw))} · ${tel?'📱 '+esc(phoneOf(raw)):'sem celular'}${mail?' · ✉️ '+esc(emailOf(raw)):''}</div></div>${st}<div class="lem-acts">${btns}</div></div>`;
+  }).join('');
+}
+async function marcarLembrete(id,on){
+  if(denyEdit())return;
+  const{data,error}=await sb.from('ag_agendamentos').update({lembrete_em:on?new Date().toISOString():null,lembrete_por:on?curUser.name:null}).eq('id',id).select();
+  if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Não foi possível marcar'}`,'err');return;}
+  const s2=fromRow(data[0]);patients=patients.map(x=>x.id===id?s2:x);
+  renderLembretes();
+}
+// Abre o envio e já marca como avisado (quem clica envia na hora).
+function lembrar(id,via){
+  const a=patients.find(x=>x.id===id);if(!a)return;
+  if(via==='whats'){
+    window.open(`https://wa.me/55${normPhone(phoneOf(a))}?text=${encodeURIComponent(lembreteMsg(a))}`,'_blank','noopener');
+  }else{
+    const corpo=lembreteMsg(a).replace(/\*/g,'').replace(/Responda SIM para confirmar ou NÃO se não puder vir\./,'Responda este e-mail para confirmar ou se não puder vir.');
+    location.href=`mailto:${encodeURIComponent(emailOf(a))}?subject=${encodeURIComponent('Lembrete do seu agendamento — Hemocentro de João Pessoa')}&body=${encodeURIComponent(corpo.replace(/\n/g,'\r\n'))}`;
+  }
+  if(!a.lembreteEm)marcarLembrete(id,true);
+}
+
+// ══ Lista de espera ══
+function esperaTemVaga(e){
+  if(e.apptDate<hoje())return false;
+  return !slotProblem({service:e.service,turn:e.turn,gender:e.gender},e.apptDate);
+}
+function updateEsperaBadge(){
+  const b=G('esp-badge');if(!b)return;
+  const n=espera.filter(e=>e.apptDate>=hoje()).length,livres=espera.filter(esperaTemVaga).length;
+  b.textContent=livres?`${livres} vaga`:n;b.style.display=n?'inline':'none';
+  b.style.background=livres?'#059669':'#d97706';
+}
+async function offerEspera(data,msg){
+  if(!selPac)return;
+  const nomeTurno=`${data.service} · ${data.turn}${data.gender?' · '+data.gender:''}`;
+  if(!confirm(`${msg}\n\nColocar ${selPac.nome} na lista de espera para ${dmy(data.apptDate)} (${nomeTurno})?\nQuando abrir vaga, o app avisa.`))return;
+  const{data:rows,error}=await sb.from('ag_espera').insert({paciente_id:selPac.id,data:data.apptDate,servico:data.service,turno:data.turn,genero:data.gender||'',obs:data.obs||''}).select();
+  if(error||!rows?.length){showToast(`❌ ${error?dbMsg(error):'Não foi possível colocar na fila'}`,'err');return;}
+  espera=[...espera,espFromRow(rows[0])];
+  closeModal('modal-pat');
+  updateEsperaBadge();
+  showToast(`⏳ ${selPac.nome} entrou na lista de espera`,'ok');
+}
+function renderEspera(){
+  const el=G('esp-list');if(!el)return;
+  const lista=[...espera].sort((a,b)=>(a.apptDate+a.criadoEm).localeCompare(b.apptDate+b.criadoEm));
+  if(!lista.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--light);font-size:.82rem">Ninguém na lista de espera.</div>';return;}
+  const ed=canEdit();
+  el.innerHTML=lista.map(e=>{
+    const pc=pacById(e.pacienteId),livre=esperaTemVaga(e),passou=e.apptDate<hoje();
+    const st=passou?'<span class="lem-st" style="background:#f1f5f9;color:#64748b">Data já passou</span>':livre?'<span class="lem-st ok">✅ Abriu vaga!</span>':'<span class="lem-st no">Turno lotado</span>';
+    const desde=e.criadoEm?new Date(e.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
+    return`<div class="esp-row${livre?' livre':''}"><div style="min-width:0;flex:1"><div class="an">${esc(pc?.nome||'Paciente removido')}</div>
+      <div class="ap">📅 ${dmy(e.apptDate)} (${DIAS_CURTOS[new Date(e.apptDate+'T12:00').getDay()].toLowerCase()}) · ${esc(e.service)} · ${esc(e.turn)}${e.gender?' · '+esc(e.gender):''}${pc?.phone?' · 📱 '+esc(pc.phone):''}${e.obs?' · '+esc(e.obs):''}${desde?` · na fila desde ${desde}${e.criadoPor?' ('+esc(e.criadoPor)+')':''}`:''}</div></div>
+      ${st}<div class="lem-acts">${ed&&!passou?`<button class="lem-btn" style="background:${livre?'#059669':'#94a3b8'}" onclick="agendarDaEspera('${e.id}')">📅 Agendar</button>`:''}${ed?`<button class="lem-btn" style="background:#dc2626" onclick="removeEspera('${e.id}')">Remover</button>`:''}</div></div>`;
+  }).join('');
+}
+function agendarDaEspera(id){
+  const e=espera.find(x=>x.id===id);if(!e)return;
+  agendarServico(e.service,e.turn,e.gender||null);
+  G('m-appt-date').value=e.apptDate;
+  const pc=pacById(e.pacienteId);if(pc)setSelPac(pc);
+  if(e.gender)G('m-gender').value=e.gender;
+  if(e.obs)G('m-obs').value=e.obs;
+  esperaAgendandoId=id;
+  updSerie();
+}
+async function removeEspera(id,silencioso=false){
+  if(denyEdit())return;
+  if(!silencioso&&!confirm('Remover este paciente da lista de espera?'))return;
+  const{error}=await sb.from('ag_espera').delete().eq('id',id);
+  if(error){showToast(`❌ ${dbMsg(error)}`,'err');return;}
+  espera=espera.filter(x=>x.id!==id);
+  renderEspera();updateEsperaBadge();
+  if(!silencioso)showToast('Removido da lista de espera','ok');
+}
+
+// ══ Remarcar ══
+let remId=null;
+function openRemarcar(id){
+  if(denyEdit())return;
+  const a=patients.find(x=>x.id===id);if(!a)return;
+  remId=id;
+  G('rem-sub').textContent=`${a.name} · ${a.service}${a.gender?' · '+a.gender:''} · hoje: ${dmy(a.apptDate)}, ${a.turn}`;
+  const base={service:a.service,gender:a.gender};
+  const linhas=[];const d=new Date();
+  for(let i=0;i<90&&linhas.length<12;i++){
+    const ds=todayStr(d);d.setDate(d.getDate()+1);
+    if(dayClosed(ds))continue;
+    const ops=['Manhã','Tarde'].map(t=>({t,mesmo:ds===a.apptDate&&t===a.turn,pb:slotProblem({...base,turn:t},ds,a.id)}));
+    if(ops.every(o=>o.pb||o.mesmo))continue;
+    linhas.push(`<div class="rem-dia"><div class="d">${dmy(ds)} <span style="color:var(--muted);font-weight:500">${DIAS[new Date(ds+'T12:00').getDay()]}</span></div>${ops.map(o=>`<button class="rem-op" ${o.pb||o.mesmo?'disabled':''} onclick="remarcar('${ds}','${o.t}')" title="${o.mesmo?'Data atual':esc(o.pb||'Vaga disponível')}">${o.t==='Manhã'?'🌅 Manhã':'🌆 Tarde'}</button>`).join('')}</div>`);
+  }
+  G('rem-list').innerHTML=linhas.join('')||'<div style="padding:20px;text-align:center;color:var(--light);font-size:.82rem">Nenhuma vaga nos próximos 90 dias para este serviço.</div>';
+  G('modal-rem').classList.add('open');
+}
+async function remarcar(ds,turno){
+  if(denyEdit()||busy)return;
+  const a=patients.find(x=>x.id===remId);if(!a)return;
+  if(!confirm(`Remarcar ${a.name} para ${dmy(ds)} (${DIAS[new Date(ds+'T12:00').getDay()].toLowerCase()}), turno da ${turno.toLowerCase()}?`))return;
+  busy=true;
+  try{
+    const upd={data:ds,turno,lembrete_em:null,lembrete_por:null};
+    if(a.status==='Faltou')upd.status='Confirmado';
+    const{data,error}=await sb.from('ag_agendamentos').update(upd).eq('id',remId).select();
+    if(error){showToast(`❌ ${dbMsg(error)}`,'err');syncNow();return;}
+    if(!data?.length){showToast('❌ Não foi possível remarcar','err');return;}
+    const s2=fromRow(data[0]);patients=patients.map(x=>x.id===remId?s2:x);
+    closeModal('modal-rem');refreshViews();
+    showToast(`📆 Remarcado para ${dmy(ds)}, ${turno}`,'ok');
+    offerAgenda(remId);
+  }catch(e){showToast(`❌ ${dbMsg(e)}`,'err');}
+  finally{busy=false;}
+}
+
 async function markStatus(id,st){
   if(denyEdit()||busy)return;
   busy=true;
@@ -2202,6 +2411,9 @@ async function confirmDel(){
 function refreshViews(background=false){
   renderDashboard();renderPTable();
   if(G('page-cadastro').classList.contains('active'))renderCadastro();
+  if(G('page-lembretes').classList.contains('active'))renderLembretes();
+  if(G('page-espera').classList.contains('active'))renderEspera();
+  updateEsperaBadge();
   if(document.getElementById('page-relatorios').classList.contains('active'))renderRelatorio();
   if(!background&&document.getElementById('page-mgmt').classList.contains('active'))renderMgmt();
   if(document.getElementById('page-alertas').classList.contains('active'))renderAlerts();
@@ -2313,7 +2525,7 @@ async function delUser(id){
 // ══════════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════════
-const PAGES=['dashboard','patients','cadastro','relatorios','mgmt','usuarios','historico','alertas'];
+const PAGES=['dashboard','patients','cadastro','lembretes','espera','relatorios','mgmt','usuarios','historico','alertas'];
 let routing=false; // true quando a troca de tela veio do botão voltar/avançar
 function pageFromHash(){
   const p=(location.hash.match(/^#\/([a-z]+)/)||[])[1];
@@ -2324,7 +2536,7 @@ function showPage(page){
   if((page==='mgmt'||page==='usuarios')&&!isGestor())page='dashboard';
   if(page==='historico'&&!histRef)page='cadastro';
   if(window.innerWidth<768)closeSidebar();
-  const titles={dashboard:'Início',patients:'Agendamentos',cadastro:'Pacientes',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
+  const titles={dashboard:'Início',patients:'Agendamentos',cadastro:'Pacientes',lembretes:'Lembretes',espera:'Lista de espera',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
   document.getElementById('page-title').textContent=titles[page]||'';
   PAGES.forEach(p=>{
     document.getElementById(`page-${p}`)?.classList.toggle('active',p===page);
@@ -2335,6 +2547,8 @@ function showPage(page){
   if(!routing&&location.hash!=='#/'+page)history.pushState(null,'','#/'+page);
   if(page==='dashboard')renderDashboard();
   if(page==='cadastro')renderCadastro();
+  if(page==='lembretes'){if(!G('lem-data').value)G('lem-data').value=proximoDiaAtendimento();renderLembretes();}
+  if(page==='espera')renderEspera();
   if(page==='patients')renderPTable();
   if(page==='relatorios')renderRelatorio();
   if(page==='mgmt')renderMgmt();
@@ -2480,6 +2694,7 @@ function renderHistorico(){
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
           <div class="hist-item-badge">${statusBadge(raw.status)}</div>
           ${ed?`<button class="ficha-btn" onclick="openEdit('${h.id}')">✏️ Editar</button>`:''}
+          ${ed&&['Confirmado','Pendente','Faltou'].includes(raw.status)?`<button class="ficha-btn" onclick="openRemarcar('${h.id}')">📆 Remarcar</button>`:''}
           <button class="ficha-btn" onclick="printFicha('${h.id}')">🖨️ Ficha</button>
         </div>
       </div>
@@ -2741,6 +2956,11 @@ function buildNotifications(){
   // Agendamentos em dias sem atendimento
   const emFechado=patients.filter(p=>isActive(p)&&effDate(p)>=today&&!p.encaixe&&dayClosed(effDate(p)));
   if(emFechado.length) notifications.push({type:'danger',ico:'📆',title:`${emFechado.length} agendamento(s) em dia sem atendimento`,sub:emFechado.slice(0,3).map(p=>`${p.name} (${dmy(p.apptDate)})`).join(', ')+(emFechado.length>3?'...':''),time:''});
+  const filaLivre=espera.filter(esperaTemVaga);
+  if(filaLivre.length) notifications.push({type:'ok',ico:'⏳',title:`Abriu vaga para ${filaLivre.length} paciente(s) da lista de espera`,sub:filaLivre.slice(0,3).map(e=>`${pacById(e.pacienteId)?.nome||'—'} (${dmy(e.apptDate)})`).join(', '),time:''});
+  const proxDia=proximoDiaAtendimento();
+  const semAviso=patients.filter(p=>effDate(p)===proxDia&&['Confirmado','Pendente'].includes(p.status)&&!p.lembreteEm);
+  if(semAviso.length) notifications.push({type:'info',ico:'📨',title:`${semAviso.length} paciente(s) de ${dmy(proxDia)} ainda sem lembrete`,sub:'Abra Lembretes para avisar',time:''});
   // Pendentes de hoje
   const todayPend=patients.filter(p=>p.status==='Pendente'&&effDate(p)===today);
   if(todayPend.length>0) notifications.push({type:'warn',ico:'⏳',title:`${todayPend.length} agendamento(s) pendente(s) hoje`,sub:todayPend.slice(0,3).map(p=>p.name).join(', ')+(todayPend.length>3?'...':''),time:'Hoje'});

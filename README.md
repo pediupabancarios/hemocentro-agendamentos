@@ -14,6 +14,7 @@ Agendamento de transfusão, transfusão pediátrica, medicações e sangria tera
 - `supabase/006_backup_automatico.sql` — cópia diária no servidor e função de restauração
 - `supabase/007_horario_opcional.sql` — agendamento só por turno (horário opcional)
 - `supabase/008_email_paciente.sql` — e-mail no cadastro, para enviar a agenda por e-mail
+- `supabase/009_lembretes_e_espera.sql` — registro de lembretes enviados e lista de espera
 
 Não precisa de compilação. Qualquer hospedagem estática com HTTPS serve (GitHub Pages, Netlify).
 
@@ -27,6 +28,7 @@ Supabase `ohuaoncwgioawgptyqgz`, compartilhado com outros apps. Este usa só as 
 | `ag_vagas` | Vagas por serviço e turno, e dias da semana com atendimento |
 | `ag_bloqueios` | Feriados e outras datas sem atendimento |
 | `ag_pacientes` | Cadastro único: nome, CPF, Cartão SUS, telefone, tipo sanguíneo, gênero |
+| `ag_espera` | Lista de espera para turnos lotados |
 | `ag_usuarios` | Quem tem acesso e com qual perfil |
 | `ag_codigos` | Códigos de primeiro acesso (só o hash; ninguém lê pela API) |
 | `ag_historico` | Quem mudou o quê, com o antes e o depois de cada registro |
