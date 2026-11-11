@@ -495,10 +495,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .ns:first-child{padding-top:2px;}
 .kbd-hint{font-size:.6rem;color:var(--light);padding:6px 11px 0;line-height:1.6;}
 .kbd-hint kbd{font-family:inherit;font-size:.58rem;font-weight:700;background:#f1f5f9;border:1px solid var(--border);border-radius:4px;padding:0 4px;}
-.svc-chips{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px;}
-.svc-chip{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:5px 11px;font-family:inherit;font-size:.72rem;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;}
-.svc-chip:hover{border-color:var(--T);color:var(--T);}
-.svc-chip.on{background:var(--T);border-color:var(--T);color:#fff;}
 .cad-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;}
 .cad-row:hover{background:#f8fafc;}
 .cad-row:last-child{border-bottom:none;}
@@ -516,6 +512,16 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   .toast{bottom:calc(82px + env(safe-area-inset-bottom));right:12px;left:12px;max-width:none;}
   .kbd-hint{display:none;}
 }
+.svc-tab{cursor:pointer;user-select:none;flex-wrap:wrap;}
+.svc-tab.on{border-color:var(--T);box-shadow:0 0 0 3px rgba(37,99,235,.18),var(--shadow-lg);}
+.svc-tab .slbl2{font-size:.95rem;font-weight:800;color:var(--text);margin-top:0;}
+.svc-tab .ssub{font-size:.7rem;margin-top:3px;color:var(--muted);}
+.sc-add{width:100%;padding:9px;flex-shrink:0;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-family:inherit;font-size:.74rem;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,.25);white-space:nowrap;}
+.sc-add:hover{opacity:.92;}
+.ar.vaga{opacity:.55;}
+.ar.vaga.livre{opacity:1;cursor:pointer;border-radius:8px;}
+.ar.vaga.livre .an{color:var(--T)!important;font-style:normal!important;font-weight:700;}
+.ar.vaga.livre:hover{background:#eff6ff;}
 /* ══ FILTRO DO DASHBOARD ══ */
 .filter-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;}
 .filter-banner button{background:#fff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
@@ -628,12 +634,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page active">
-      <div class="stats-row">
-        <div class="scard ct fu"><div class="sico ct">💉</div><div><div class="snum">1</div><div class="slbl2">Transfusão</div><div class="ssub" id="sc-t">—</div></div></div>
-        <div class="scard cp fu1"><div class="sico cp">👶</div><div><div class="snum">2</div><div class="slbl2">Pediátrica</div><div class="ssub" id="sc-p">—</div></div></div>
-        <div class="scard cm fu2"><div class="sico cm">💊</div><div><div class="snum">3</div><div class="slbl2">Medicações</div><div class="ssub" id="sc-m">—</div></div></div>
-        <div class="scard cs fu3"><div class="sico cs">🩸</div><div><div class="snum">4</div><div class="slbl2">Sangria</div><div class="ssub" id="sc-s">—</div></div></div>
-      </div>
+      <div class="stats-row" id="svc-tabs"></div>
       <div class="dash-grid">
         <div class="col-main">
           <div class="panel fu1">
@@ -650,7 +651,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
                 <span class="plink" onclick="showPage('patients')">Ver todos →</span>
               </div>
             </div>
-            <div class="svc-chips" id="svc-chips"></div>
           <div id="appt-list"></div>
           </div>
           <div class="ibar fu3">
@@ -1302,10 +1302,7 @@ function goTodayDash(){
 }
 
 function renderDashboard(){
-  document.getElementById('sc-t').textContent=`${caps.T.fmanha+caps.T.mmanha}M · ${caps.T.ftarde+caps.T.mtarde}T vagas`;
-  document.getElementById('sc-p').textContent=`${caps.P.manha}M · ${caps.P.tarde}T vagas`;
-  document.getElementById('sc-m').textContent=`${caps.M.manha}M · ${caps.M.tarde}T vagas`;
-  document.getElementById('sc-s').textContent=`${caps.S.fmanha+caps.S.mmanha}M · ${caps.S.ftarde+caps.S.mtarde}T vagas`;
+  renderSvcTabs();
   updateDashHeader();
   renderApptList(); renderSummary(); renderCapBars();
   // Infobar counts for the selected date
@@ -1330,10 +1327,53 @@ function periodBlock(turn,maxKey,list,showExtra){
     const acts=canEdit()?`<div class="row-actions">${marcar}<button class="rbtn" onclick="openEdit('${p.id}')">✏️</button><button class="rbtn del" onclick="openDel('${p.id}')">🗑️</button></div>`:'';
     return`<div class="ar"><span class="at2" title="Ordem no turno">${idx+1}º</span><div class="ai"><div class="an">${p.name}</div><div class="ap">Prot: ${p.proto}${extra}${raw.serieId?' · 🔁':''}</div></div>${badge}${acts}</div>`;
   }).join('');
-  for(let i=0;i<Math.min(Math.max(0,max-used),2);i++)rows+=`<div class="ar" style="opacity:.3"><span class="at2">—</span><div class="ai"><div class="an" style="font-style:italic;color:var(--light)">Vaga disponível</div></div><span class="bv">Aberta</span></div>`;
+  for(let i=0;i<Math.min(Math.max(0,max-used),2);i++)rows+=canEdit()&&!dayClosed(todayStr(viewDate))
+    ?`<div class="ar vaga livre" onclick="agendarVaga('${maxKey}')" title="Agendar nesta vaga"><span class="at2">＋</span><div class="ai"><div class="an">Vaga disponível — agendar</div></div><span class="bk">Livre</span></div>`
+    :`<div class="ar vaga"><span class="at2">—</span><div class="ai"><div class="an" style="font-style:italic;color:var(--light)">Vaga disponível</div></div><span class="bv">Aberta</span></div>`;
   return`<div class="pblock"><div class="phdr2 ${cls}">${em} ${turn.toUpperCase()} · ${rng} · <strong>${used}/${max}</strong></div><div class="pbody">${rows}</div></div>`;
 }
 
+// Abas de serviço no topo do Início: tocar filtra; "+ Agendar" abre o formulário já com o serviço.
+const SVC_TABS=[
+  {svc:'Transfusão',cls:'ct',ico:'💉',keys:['T.fmanha','T.ftarde','T.mmanha','T.mtarde']},
+  {svc:'Pediátrica',cls:'cp',ico:'👶',keys:['P.manha','P.tarde']},
+  {svc:'Medicações',cls:'cm',ico:'💊',keys:['M.manha','M.tarde']},
+  {svc:'Sangria',cls:'cs',ico:'🩸',keys:['S.fmanha','S.ftarde','S.mmanha','S.mtarde']},
+];
+function renderSvcTabs(){
+  const el=G('svc-tabs');if(!el)return;
+  const ds=todayStr(viewDate),fechado=dayClosed(ds),ed=canEdit();
+  el.innerHTML=SVC_TABS.map(t=>{
+    const used=t.keys.reduce((a,k)=>a+getUsed(k,ds),0),max=t.keys.reduce((a,k)=>a+getMax(k),0);
+    const on=dashFilter?.svc===t.svc&&!dashFilter.gender&&!dashFilter.turn;
+    const info=fechado?'Sem atendimento neste dia':`${used} de ${max} vagas ocupadas`;
+    return`<div class="scard ${t.cls} svc-tab${on?' on':''}" role="button" tabindex="0" title="${on?'Mostrar todos os serviços':'Mostrar só '+t.svc}" onclick="toggleSvc('${t.svc}')">
+      <div class="sico ${t.cls}">${t.ico}</div>
+      <div style="min-width:0"><div class="slbl2">${t.svc}</div><div class="ssub">${info}</div></div>
+      ${ed?`<button class="sc-add" onclick="event.stopPropagation();agendarServico('${t.svc}')">+ Agendar</button>`:''}
+    </div>`;
+  }).join('');
+}
+function toggleSvc(svc){
+  if(dashFilter?.svc===svc&&!dashFilter.gender&&!dashFilter.turn){clearDashFilter();renderDashboard();}
+  else filterDash(svc);
+}
+// Data sugerida: o dia aberto no Início, se não for passado.
+function agendarServico(svc,turn,gender){
+  if(denyEdit())return;
+  openAddPatient();
+  G('m-svc').value=svc;updModal();
+  if(turn)G('m-turn').value=turn;
+  if(gender)G('m-gender').value=gender;
+  updSerie();
+  setTimeout(()=>G('m-pac-busca').focus(),60);
+}
+function agendarVaga(key){
+  const[cod,sub]=key.split('.');
+  const svc={T:'Transfusão',P:'Pediátrica',M:'Medicações',S:'Sangria'}[cod];
+  const gender=(cod==='T'||cod==='S')?(sub.startsWith('f')?'Feminino':'Masculino'):null;
+  agendarServico(svc,sub.endsWith('manha')?'Manhã':'Tarde',gender);
+}
 function filterDash(svc,gender=null,turn=null){
   dashFilter={svc,gender,turn};
   showPage('dashboard');
@@ -1356,9 +1396,7 @@ function renderApptList(){
   let html='';
   const fechado=dayClosed(todayStr(viewDate));
   if(fechado)html+=`<div class="closed-banner">🚫 Sem atendimento neste dia: ${esc(fechado)}</div>`;
-  const chips=[['','Todos'],['Transfusão','💉 Transfusão'],['Pediátrica','👶 Pediátrica'],['Medicações','💊 Medicações'],['Sangria','🩸 Sangria']];
-  G('svc-chips').innerHTML=chips.map(([v,l])=>`<button class="svc-chip${(f?.svc||'')===v?' on':''}" onclick="${v?`filterDash('${v}')`:`clearDashFilter();renderDashboard()`}">${l}</button>`).join('');
-  if(f&&(f.gender||f.turn))html+=`<div class="filter-banner"><span>Mostrando: ${[f.svc,f.gender,f.turn].filter(Boolean).join(' · ')}</span><button onclick="clearDashFilter();showPage('dashboard')">Ver todos os serviços</button></div>`;
+  if(f)html+=`<div class="filter-banner"><span>Mostrando só: ${[f.svc,f.gender,f.turn].filter(Boolean).join(' · ')}</span><button onclick="clearDashFilter();showPage('dashboard')">Ver todos os serviços</button></div>`;
   svcs.forEach(s=>{
     html+=`<span class="slbl3" style="color:${s.color}">${s.label}</span>`;
     if(s.type==='flat'){
