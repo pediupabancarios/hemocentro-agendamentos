@@ -13,6 +13,7 @@ Agendamento de transfusão, transfusão pediátrica, medicações e sangria tera
 - `supabase/005_pacientes_e_series.sql` — cadastro único de pacientes e agendamentos em série
 - `supabase/006_backup_automatico.sql` — cópia diária no servidor e função de restauração
 - `supabase/007_horario_opcional.sql` — agendamento só por turno (horário opcional)
+- `supabase/008_email_paciente.sql` — e-mail no cadastro, para enviar a agenda por e-mail
 
 Não precisa de compilação. Qualquer hospedagem estática com HTTPS serve (GitHub Pages, Netlify).
 

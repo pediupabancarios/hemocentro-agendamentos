@@ -858,7 +858,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         <div class="pac-hint" id="m-pac-hint" style="display:none">Este agendamento ainda não tem cadastro: escolha o paciente ou cadastre-o.</div>
       </div>
     </div>
-    <div class="mfg" id="m-tel-w" style="display:none"><label>📱 Celular (WhatsApp)</label><input type="tel" id="m-phone" placeholder="(83) 9 9999-9999" autocomplete="off"/></div>
+    <div class="mrow" id="m-tel-w" style="display:none">
+      <div class="mfg"><label>📱 Celular (WhatsApp)</label><input type="tel" id="m-phone" placeholder="(83) 9 9999-9999" autocomplete="off"/></div>
+      <div class="mfg"><label>✉️ E-mail</label><input type="email" id="m-email" placeholder="paciente@email.com" autocomplete="off"/></div>
+    </div>
     <div class="mrow">
       <div class="mfg"><label>Serviço</label><select id="m-svc" onchange="updModal()"><option value="Transfusão">Transfusão</option><option value="Pediátrica">Pediátrica</option><option value="Medicações">Medicações</option><option value="Sangria">Sangria</option></select></div>
       <div class="mfg"><label>Turno</label><select id="m-turn" onchange="updSerie()"><option value="Manhã">Manhã (07h–12h)</option><option value="Tarde">Tarde (12h–18h)</option></select></div>
@@ -889,6 +892,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
     <div class="mrow">
       <div class="mfg"><label>📱 Celular (WhatsApp)</label><input type="tel" id="pc-tel" placeholder="(83) 9 9999-9999"/></div>
+      <div class="mfg"><label>✉️ E-mail</label><input type="email" id="pc-email" placeholder="paciente@email.com"/></div>
+    </div>
+    <div class="mrow">
       <div class="mfg"><label>Tipo Sanguíneo</label><select id="pc-blood"><option value="">Não informado</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
     </div>
     <div class="mfg"><label>Gênero</label><select id="pc-genero"><option value="">Não informado</option><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select></div>
@@ -899,9 +905,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <!-- MODAL: ENVIAR AGENDA -->
 <div class="modal-bg" id="modal-envio">
   <div class="modal">
-    <h2>💬 Enviar as datas ao paciente?</h2><p class="msub" id="envio-sub">—</p>
+    <h2>📅 Enviar as datas ao paciente?</h2><p class="msub" id="envio-sub">—</p>
     <div id="envio-prev" style="white-space:pre-wrap;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 14px;font-size:.78rem;line-height:1.5;max-height:46vh;overflow-y:auto"></div>
-    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-envio')">Agora não</button><button class="btn-confirm" id="envio-btn" style="background:#128C7E">💬 Enviar pelo WhatsApp</button></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-envio')">Agora não</button><button class="btn-confirm" id="envio-email-btn" style="background:#2563eb">✉️ Enviar por e-mail</button><button class="btn-confirm" id="envio-btn" style="background:#128C7E">💬 Enviar pelo WhatsApp</button></div>
   </div>
 </div>
 
@@ -980,8 +986,9 @@ let diasSemana=[0,1,2,3,4,5,6], bloqueios=new Map();
 let pacientes=[], selPac=null, pacEditId=null, pacFromForm=false;
 const G=id=>document.getElementById(id);
 const onlyDigits=v=>String(v||'').replace(/\D/g,'');
-function pacFromRow(r){return{id:r.id,nome:r.nome,cpf:r.cpf||'',cns:r.cns||'',phone:r.telefone||'',blood:r.tipo_sanguineo||'',gender:r.genero||''};}
-function pacToRow(p){return{nome:p.nome,cpf:p.cpf||null,cns:p.cns||null,telefone:p.phone||'',tipo_sanguineo:p.blood||'',genero:p.gender||''};}
+function pacFromRow(r){return{id:r.id,nome:r.nome,cpf:r.cpf||'',cns:r.cns||'',phone:r.telefone||'',email:r.email||'',blood:r.tipo_sanguineo||'',gender:r.genero||''};}
+function pacToRow(p){return{nome:p.nome,cpf:p.cpf||null,cns:p.cns||null,telefone:p.phone||'',email:p.email||null,tipo_sanguineo:p.blood||'',genero:p.gender||''};}
+const emailOk=e=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 const pacById=id=>id?pacientes.find(p=>p.id===id)||null:null;
 function fmtCpf(d){return d?d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4'):'';}
 function fmtCns(d){return d?d.replace(/^(\d{3})(\d{4})(\d{4})(\d{4})$/,'$1 $2 $3 $4'):'';}
@@ -1826,6 +1833,7 @@ function setSelPac(p){
   // O celular é do cadastro: aparece com o paciente escolhido e, se mudar, atualiza o cadastro ao salvar.
   G('m-tel-w').style.display=selPac?'block':'none';
   G('m-phone').value=selPac?.phone||'';
+  G('m-email').value=selPac?.email||'';
   if(!selPac){sel.style.display='none';bw.style.display='block';G('m-pac-busca').value='';return;}
   sel.innerHTML=`<div style="flex:1;min-width:0"><div class="pn">${esc(selPac.nome)}</div><div class="ap">${esc(docLabel(selPac))} · 📱 ${esc(selPac.phone||'sem telefone')} · 🩸 ${esc(selPac.blood||'—')}</div></div>`
     +`<button type="button" class="ficha-btn" onclick="openPacModal(selPac.id,true)">✏️ Cadastro</button><button type="button" class="ficha-btn" onclick="setSelPac(null);G('m-pac-busca').focus()">Trocar</button>`;
@@ -1847,7 +1855,7 @@ function openPacModal(id,fromForm=false){
   const p=pacById(id);
   G('pc-title').textContent=p?'Editar Cadastro do Paciente':'Novo Paciente';
   G('pc-nome').value=p?.nome||'';G('pc-cpf').value=fmtCpf(p?.cpf||'');G('pc-cns').value=fmtCns(p?.cns||'');
-  G('pc-tel').value=p?.phone||'';G('pc-blood').value=p?.blood||'';G('pc-genero').value=p?.gender||'';
+  G('pc-tel').value=p?.phone||'';G('pc-email').value=p?.email||'';G('pc-blood').value=p?.blood||'';G('pc-genero').value=p?.gender||'';
   if(!p&&fromForm){
     const q=G('m-pac-busca').value.trim(),d=onlyDigits(q);
     if(d.length===11&&d.length===q.replace(/[.\-\s]/g,'').length)G('pc-cpf').value=fmtCpf(d);
@@ -1861,7 +1869,8 @@ function openPacModal(id,fromForm=false){
 }
 async function savePac(){
   if(denyEdit()||busy)return;
-  const nome=G('pc-nome').value.trim(),cpf=onlyDigits(G('pc-cpf').value),cns=onlyDigits(G('pc-cns').value),phone=G('pc-tel').value.trim();
+  const nome=G('pc-nome').value.trim(),cpf=onlyDigits(G('pc-cpf').value),cns=onlyDigits(G('pc-cns').value),phone=G('pc-tel').value.trim(),email=G('pc-email').value.trim().toLowerCase();
+  if(email&&!emailOk(email)){showToast('⚠️ E-mail inválido','warn');return;}
   if(!nome){showToast('⚠️ Informe o nome do paciente','warn');return;}
   if(cpf&&!cpfValid(cpf)){showToast('⚠️ CPF inválido: confira os números','warn');return;}
   if(cns&&!cnsValid(cns)){showToast('⚠️ Cartão SUS inválido: confira os 15 números','warn');return;}
@@ -1870,7 +1879,7 @@ async function savePac(){
   if(dupDoc){showToast(`⚠️ Este documento já é de ${dupDoc.nome}. Busque-o pelo número.`,'warn');return;}
   if(!pacEditId&&pacientes.some(p=>p.nome.toLowerCase()===nome.toLowerCase())
     &&!confirm(`Já existe paciente chamado "${nome}".\n\nOK = cadastrar outra pessoa com o mesmo nome\nCancelar = voltar e escolher o existente na busca`))return;
-  const row=pacToRow({nome,cpf,cns,phone,blood:G('pc-blood').value,gender:G('pc-genero').value});
+  const row=pacToRow({nome,cpf,cns,phone,email,blood:G('pc-blood').value,gender:G('pc-genero').value});
   const editando=pacEditId;
   busy=true;
   try{
@@ -2003,12 +2012,16 @@ async function savePat(){
   const status=document.getElementById('m-status').value;
   const showsExtra=service==='Medicações'||service==='Pediátrica';
   if(!selPac){showToast('⚠️ Escolha o paciente na busca ou cadastre um novo','warn');G('m-pac-busca').focus();return;}
-  const novoTel=G('m-phone').value.trim();
+  const novoTel=G('m-phone').value.trim(),novoEmail=G('m-email').value.trim().toLowerCase();
   if(novoTel&&![10,11].includes(normPhone(novoTel).length)){showToast('⚠️ Celular inválido: informe DDD e número','warn');G('m-phone').focus();return;}
-  if(novoTel!==(selPac.phone||'')){
+  if(novoEmail&&!emailOk(novoEmail)){showToast('⚠️ E-mail inválido','warn');G('m-email').focus();return;}
+  const mudouCad={};
+  if(novoTel!==(selPac.phone||''))mudouCad.telefone=novoTel;
+  if(novoEmail!==(selPac.email||''))mudouCad.email=novoEmail||null;
+  if(Object.keys(mudouCad).length){
     // Atualiza o cadastro primeiro: o banco copia o telefone do cadastro para o agendamento.
-    const{data:pc,error:pe}=await sb.from('ag_pacientes').update({telefone:novoTel}).eq('id',selPac.id).select();
-    if(pe||!pc?.length){showToast(`❌ Não foi possível salvar o celular: ${pe?dbMsg(pe):'sem permissão'}`,'err');return;}
+    const{data:pc,error:pe}=await sb.from('ag_pacientes').update(mudouCad).eq('id',selPac.id).select();
+    if(pe||!pc?.length){showToast(`❌ Não foi possível atualizar o cadastro: ${pe?dbMsg(pe):'sem permissão'}`,'err');return;}
     const atualizado=pacFromRow(pc[0]);
     pacientes=pacientes.map(x=>x.id===atualizado.id?atualizado:x);
     selPac=atualizado;
@@ -2388,7 +2401,7 @@ function renderHistorico(){
     el.innerHTML=`<div class="hist-header"><div class="hist-av">${esc(pacSo.nome[0])}</div><div style="flex:1;min-width:0">
       <div class="hist-name">${esc(pacSo.nome)}</div>
       <div class="hist-meta">📱 ${esc(pacSo.phone||'Sem telefone')} · 🩸 ${esc(pacSo.blood||'—')}</div>
-      <div class="hist-meta">🪪 ${esc(docLabel(pacSo))}</div>
+      <div class="hist-meta">🪪 ${esc(docLabel(pacSo))}${pacSo.email?' · ✉️ '+esc(pacSo.email):''}</div>
       <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
         ${canEdit()?`<button class="whatsapp-btn" style="background:#f1f5f9;color:#374151" onclick="agendarPaciente('${pacSo.id}')">📅 Agendar</button><button class="whatsapp-btn" style="background:#0f766e" onclick="openPacModal('${pacSo.id}')">🪪 Cadastro</button>`:''}
       </div></div></div>`;
@@ -2441,7 +2454,7 @@ function renderHistorico(){
       <div style="flex:1;min-width:0">
         <div class="hist-name">${p.name}</div>
         <div class="hist-meta">📱 ${phoneDisplay} · 🩸 ${p.blood||'—'}${p.dob?` · Nasc: ${dmy(p.dob)}`:''}</div>
-        <div class="hist-meta">🪪 ${esc(pac?docLabel(pac):'Sem cadastro vinculado')}</div>
+        <div class="hist-meta">🪪 ${esc(pac?docLabel(pac):'Sem cadastro vinculado')}${pac?.email?' · ✉️ '+esc(pac.email):''}</div>
         <div class="hist-stats">
           <div class="hist-stat"><div class="v">${history.length}</div><div class="l">Total</div></div>
           <div class="hist-stat"><div class="v" style="color:#86efac">${ok}</div><div class="l">Confirm.</div></div>
@@ -2450,6 +2463,7 @@ function renderHistorico(){
         <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
           ${whatsLink}${smsLink}
           ${agendaFutura(rawP).length?`<button class="whatsapp-btn" style="background:#128C7E" onclick="sendAgendaWhatsApp('${p.id}')">📅 Enviar agenda</button>`:''}
+          ${agendaFutura(rawP).length&&emailOk(pac?.email||'')?`<button class="whatsapp-btn" style="background:#2563eb" onclick="sendAgendaEmail('${p.id}')">✉️ Enviar por e-mail</button>`:''}
           ${ed&&pac?`<button class="whatsapp-btn" style="background:#0f766e" onclick="openPacModal('${pac.id}')">🪪 Cadastro</button>`:''}
           ${ed?`<button class="whatsapp-btn" style="background:#f1f5f9;color:#374151" onclick="openAddPatient('${p.id}')">📅 Agendar</button>`:''}
         </div>
@@ -2523,16 +2537,33 @@ function sendAgendaWhatsApp(id){
   showToast(`💬 Abrindo WhatsApp com ${lista.length} agendamento(s)...`,'ok');
   return w;
 }
-// Depois de criar uma série: janela com o botão de envio (o clique evita o bloqueio de pop-up).
+function emailOf(a){return pacById(a.pacienteId)?.email||'';}
+// Abre o programa de e-mail com destinatário, assunto e lista de datas preenchidos.
+function sendAgendaEmail(id){
+  const a=patients.find(x=>x.id===id);
+  if(!a){showToast('Paciente não encontrado','err');return;}
+  const lista=agendaFutura(a);
+  if(!lista.length){showToast('⚠️ Este paciente não tem agendamentos futuros','warn');return;}
+  const email=emailOf(a);
+  if(!emailOk(email)){showToast('⚠️ Cadastre um e-mail válido para o paciente','warn');return;}
+  const assunto=lista.length>1?'Seus agendamentos — Hemocentro de João Pessoa':'Seu agendamento — Hemocentro de João Pessoa';
+  const corpo=agendaMsg(lista).replace(/\*/g,'').replace(/Responda SIM para confirmar ou NÃO se precisar remarcar\./,'Responda este e-mail para confirmar ou se precisar remarcar.');
+  location.href=`mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo.replace(/\n/g,'\r\n'))}`;
+  showToast(`✉️ Abrindo o e-mail com ${lista.length} agendamento(s)...`,'ok');
+}
+// Depois de criar uma série: janela com os botões de envio (o clique evita o bloqueio de pop-up).
 function offerAgenda(id){
   const a=patients.find(x=>x.id===id);
   if(!a)return;
   const lista=agendaFutura(a);
-  const tel=normPhone(phoneOf(a));
-  if(!lista.length||![10,11].includes(tel.length))return;
+  const temTel=[10,11].includes(normPhone(phoneOf(a)).length),temEmail=emailOk(emailOf(a));
+  if(!lista.length||(!temTel&&!temEmail))return;
   G('envio-sub').textContent=`${a.name} · ${lista.length} agendamento(s) de hoje em diante`;
   G('envio-prev').textContent=agendaMsg(lista);
+  G('envio-btn').style.display=temTel?'':'none';
+  G('envio-email-btn').style.display=temEmail?'':'none';
   G('envio-btn').onclick=()=>{sendAgendaWhatsApp(id);closeModal('modal-envio');};
+  G('envio-email-btn').onclick=()=>{closeModal('modal-envio');sendAgendaEmail(id);};
   G('modal-envio').classList.add('open');
 }
 function sendSMSById(id){
