@@ -542,6 +542,39 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .rem-op{border:1.5px solid #bbf7d0;background:#f0fdf4;color:#065f46;border-radius:9px;padding:6px 10px;font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;}
 .rem-op:hover{background:#dcfce7;}
 .rem-op:disabled{border-color:var(--border);background:#f8fafc;color:#cbd5e1;cursor:default;}
+.cal-tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.cal-tab{border:1.5px solid var(--border);background:#fff;border-radius:10px;padding:7px 14px;font-family:inherit;font-size:.78rem;font-weight:800;color:var(--muted);cursor:pointer;}
+.cal-tab.on{background:var(--T);border-color:var(--T);color:#fff;}
+.cal-nav2{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.cal-nav2 button{background:#f1f5f9;border:none;border-radius:8px;height:30px;min-width:30px;padding:0 10px;cursor:pointer;font-family:inherit;font-size:.74rem;font-weight:700;}
+.cal-nav2 .lbl{font-size:.86rem;font-weight:800;min-width:150px;text-align:center;}
+.sem-grid{display:grid;grid-template-columns:repeat(var(--ncol),minmax(0,1fr));gap:10px;}
+.sem-dia{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.sem-dia.hoje{border-color:var(--T);box-shadow:0 0 0 2px rgba(37,99,235,.2);}
+.sem-dia.fech{background:#f8fafc;opacity:.75;}
+.sem-hdr{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;}
+.sem-hdr:hover{background:#f8fafc;}
+.sem-hdr .dn{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
+.sem-hdr .dd{font-size:1.15rem;font-weight:900;}
+.sem-hdr .tt{font-size:.66rem;color:var(--muted);margin-top:2px;}
+.sem-body{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;}
+.sem-svc{font-size:.66rem;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:5px;margin-top:2px;}
+.sem-pills{display:flex;gap:4px;}
+.sem-pill{flex:1;border:none;border-radius:8px;padding:5px 4px;font-family:inherit;font-size:.64rem;font-weight:800;cursor:pointer;text-align:center;}
+.oc-0{background:#dcfce7;color:#166534;}.oc-1{background:#fef3c7;color:#92400e;}.oc-2{background:#fee2e2;color:#991b1b;}.oc-x{background:#f1f5f9;color:#94a3b8;}
+.mes-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.mes-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;}
+.mes-dn{font-size:.6rem;font-weight:800;color:var(--muted);text-align:center;letter-spacing:.06em;padding-bottom:4px;}
+.mes-cel{border-radius:10px;padding:7px 6px;min-height:64px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;border:2px solid transparent;}
+.mes-cel:hover{filter:brightness(.97);}
+.mes-cel.hoje{border-color:var(--T);}
+.mes-cel .n{font-size:.82rem;font-weight:900;}
+.mes-cel .v{font-size:.66rem;font-weight:800;}
+.mes-leg{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:.7rem;color:var(--muted);}
+.mes-leg span{display:inline-flex;align-items:center;gap:5px;}
+.mes-leg i{width:12px;height:12px;border-radius:4px;display:inline-block;}
+@media(max-width:900px){.sem-grid{grid-template-columns:1fr;}}
+@media(max-width:767px){.mes-cel{min-height:52px;padding:5px 4px;}.mes-cel .v{font-size:.58rem;}.cal-nav2{margin-left:0;width:100%;justify-content:space-between;}}
 /* ══ FILTRO DO DASHBOARD ══ */
 .filter-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;}
 .filter-banner button{background:#fff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
@@ -616,6 +649,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <div class="ns">Atendimento</div>
       <div class="ni active" data-page="dashboard" onclick="clearDashFilter();showPage('dashboard')"><span class="nil"><span class="ico">🏠</span>Início</span></div>
       <div class="ni" data-page="patients" onclick="showPage('patients')"><span class="nil"><span class="ico">📅</span>Agendamentos</span></div>
+      <div class="ni" data-page="calendario" onclick="showPage('calendario')"><span class="nil"><span class="ico">🗓️</span>Calendário</span></div>
       <div class="ni" data-page="cadastro" onclick="showPage('cadastro')"><span class="nil"><span class="ico">👥</span>Pacientes</span></div>
       <div class="ni" data-page="lembretes" onclick="showPage('lembretes')"><span class="nil"><span class="ico">📨</span>Lembretes</span></div>
       <div class="ni" data-page="espera" onclick="showPage('espera')"><span class="nil"><span class="ico">⏳</span>Lista de espera <span id="esp-badge" style="display:none;background:#d97706;color:#fff;border-radius:10px;font-size:.58rem;padding:1px 6px;font-weight:800;margin-left:4px">0</span></span></div>
@@ -830,6 +864,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
 
     <!-- HISTÓRICO -->
+    <div id="page-calendario" class="page">
+      <div class="cal-tabs" id="cal-tabs"></div>
+      <div id="cal-body"></div>
+    </div>
+
     <div id="page-lembretes" class="page">
       <div class="page-hdr"><div><h2>📨 Lembretes</h2><p>Avise os pacientes do próximo dia de atendimento</p></div>
         <div style="display:flex;gap:6px;align-items:center"><input type="date" id="lem-data" onchange="renderLembretes()" style="padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.82rem;background:#fff"/></div></div>
@@ -2185,6 +2224,87 @@ function openDel(id){
   G('del-serie-l').textContent=`Excluir também os próximos ${prox.length} agendamento(s) desta série`;
   document.getElementById('modal-del').classList.add('open');
 }
+// ══ Calendário: semana e mês ══
+let calTab='semana', calRef=new Date(), calSvc='';
+const SVC_KEYS={'Transfusão':{M:['T.fmanha','T.mmanha'],T:['T.ftarde','T.mtarde'],ico:'💉'},'Pediátrica':{M:['P.manha'],T:['P.tarde'],ico:'👶'},'Medicações':{M:['M.manha'],T:['M.tarde'],ico:'💊'},'Sangria':{M:['S.fmanha','S.mmanha'],T:['S.ftarde','S.mtarde'],ico:'🩸'}};
+// Ocupação de um dia: serviço (ou todos) e turno (ou ambos).
+function ocupacao(ds,svc,turno){
+  const svcs=svc?[svc]:Object.keys(SVC_KEYS);
+  let used=0,max=0;
+  for(const s of svcs)for(const t of(turno?[turno]:['M','T']))for(const k of SVC_KEYS[s][t]){used+=getUsed(k,ds);max+=getMax(k);}
+  return{used,max};
+}
+function ocClasse(o,fechado){
+  if(fechado)return'oc-x';
+  if(!o.max)return'oc-x';
+  return o.used>=o.max?'oc-2':o.used/o.max>=.7?'oc-1':'oc-0';
+}
+function irParaDia(ds,svc){
+  viewDate=new Date(ds+'T12:00');syncCal();
+  if(svc)filterDash(svc);else{clearDashFilter();showPage('dashboard');}
+}
+function calMover(d){
+  if(calTab==='semana')calRef.setDate(calRef.getDate()+7*d);
+  else calRef=new Date(calRef.getFullYear(),calRef.getMonth()+d,1);
+  renderCalendario();
+}
+function renderCalendario(){
+  const tabs=G('cal-tabs');if(!tabs)return;
+  let lbl;
+  if(calTab==='semana'){
+    const ini=new Date(calRef);ini.setDate(ini.getDate()-((ini.getDay()+6)%7));
+    const fim=new Date(ini);fim.setDate(fim.getDate()+6);
+    lbl=`${dmy(todayStr(ini)).slice(0,5)} a ${dmy(todayStr(fim))}`;
+  }else lbl=`${MESES[calRef.getMonth()]} de ${calRef.getFullYear()}`;
+  tabs.innerHTML=`<button class="cal-tab${calTab==='semana'?' on':''}" onclick="calTab='semana';renderCalendario()">Semana</button>
+    <button class="cal-tab${calTab==='mes'?' on':''}" onclick="calTab='mes';renderCalendario()">Mês</button>
+    <div class="cal-nav2"><button onclick="calMover(-1)">‹</button><span class="lbl">${lbl}</span><button onclick="calMover(1)">›</button><button onclick="calRef=new Date();renderCalendario()">Hoje</button></div>`;
+  G('cal-body').innerHTML=calTab==='semana'?htmlSemana():htmlMes();
+}
+function htmlSemana(){
+  const ini=new Date(calRef);ini.setDate(ini.getDate()-((ini.getDay()+6)%7));
+  const dias=[];
+  for(let i=0;i<7;i++){const d=new Date(ini);d.setDate(d.getDate()+i);const ds=todayStr(d);
+    // Dias da semana sem atendimento ficam de fora; feriados aparecem em cinza
+    if(!diasSemana.includes(d.getDay())&&!patients.some(p=>effDate(p)===ds&&isActive(p)))continue;
+    dias.push(ds);}
+  const ed=canEdit(),hojeS=hoje();
+  return`<div class="sem-grid" style="--ncol:${dias.length||1}">`+dias.map(ds=>{
+    const dt=new Date(ds+'T12:00'),fechado=dayClosed(ds),tot=ocupacao(ds);
+    const n=patients.filter(p=>effDate(p)===ds&&isActive(p)).length;
+    const corpo=fechado?`<div style="font-size:.72rem;color:var(--muted);padding:6px 2px">🚫 ${esc(fechado)}</div>`:
+      Object.entries(SVC_KEYS).map(([svc,k])=>{
+        const pill=t=>{const o=ocupacao(ds,svc,t);const cheio=o.used>=o.max;
+          const acao=ed&&!cheio&&ds>=hojeS?`agendarServicoEm('${svc}','${t==='M'?'Manhã':'Tarde'}','${ds}')`:`irParaDia('${ds}','${svc}')`;
+          return`<button class="sem-pill ${ocClasse(o,false)}" onclick="${acao}" title="${t==='M'?'Manhã':'Tarde'}: ${o.used} de ${o.max}${ed&&!cheio&&ds>=hojeS?' · clique para agendar':''}">${t==='M'?'M':'T'} ${o.used}/${o.max}</button>`;};
+        return`<div class="sem-svc">${k.ico} ${svc}</div><div class="sem-pills">${pill('M')}${pill('T')}</div>`;
+      }).join('');
+    return`<div class="sem-dia${ds===hojeS?' hoje':''}${fechado?' fech':''}">
+      <div class="sem-hdr" onclick="irParaDia('${ds}')" title="Abrir este dia no Início"><div class="dn">${DIAS[dt.getDay()]}</div><div class="dd">${dmy(ds).slice(0,5)}</div><div class="tt">${n} agendado(s)${fechado?'':` · ${tot.used}/${tot.max} vagas`}</div></div>
+      <div class="sem-body">${corpo}</div></div>`;
+  }).join('')+`</div>
+  <div class="mes-leg"><span><i class="oc-0"></i>Com vagas</span><span><i class="oc-1"></i>Quase cheio (70%+)</span><span><i class="oc-2"></i>Lotado</span><span><i class="oc-x"></i>Sem atendimento</span><span>M = Manhã · T = Tarde${canEdit()?' · toque num turno com vaga para agendar':''}</span></div>`;
+}
+function htmlMes(){
+  const y=calRef.getFullYear(),m=calRef.getMonth();
+  const chips=[['','Todos'],...Object.entries(SVC_KEYS).map(([s,k])=>[s,`${k.ico} ${s}`])];
+  let h=`<div class="mes-chips">${chips.map(([v,l])=>`<button class="cal-tab${calSvc===v?' on':''}" onclick="calSvc='${v}';renderCalendario()">${l}</button>`).join('')}</div><div class="panel"><div class="mes-grid">`;
+  h+=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'].map(d=>`<div class="mes-dn">${d}</div>`).join('');
+  const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),hojeS=hoje();
+  for(let i=0;i<first;i++)h+='<div></div>';
+  for(let d=1;d<=days;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const fechado=dayClosed(ds),o=ocupacao(ds,calSvc||null);
+    const v=fechado?(bloqueios.has(ds)?'🚫 '+esc(bloqueios.get(ds)||'Bloqueado'):'Fechado'):`${o.used}/${o.max}`;
+    h+=`<div class="mes-cel ${ocClasse(o,fechado)}${ds===hojeS?' hoje':''}" onclick="irParaDia('${ds}',${calSvc?`'${calSvc}'`:'null'})" title="${fechado?esc(fechado):`${o.used} de ${o.max} vagas ocupadas`}"><span class="n">${d}</span><span class="v">${v}</span></div>`;
+  }
+  return h+`</div><div class="mes-leg"><span><i class="oc-0"></i>Com vagas</span><span><i class="oc-1"></i>Quase cheio (70%+)</span><span><i class="oc-2"></i>Lotado</span><span><i class="oc-x"></i>Sem atendimento</span><span>Toque num dia para abrir no Início</span></div></div>`;
+}
+function agendarServicoEm(svc,turno,ds){
+  agendarServico(svc,turno);
+  G('m-appt-date').value=ds;updSerie();
+}
+
 // ══ Lembretes da véspera ══
 function proximoDiaAtendimento(){
   const d=new Date();
@@ -2411,6 +2531,7 @@ async function confirmDel(){
 function refreshViews(background=false){
   renderDashboard();renderPTable();
   if(G('page-cadastro').classList.contains('active'))renderCadastro();
+  if(G('page-calendario').classList.contains('active'))renderCalendario();
   if(G('page-lembretes').classList.contains('active'))renderLembretes();
   if(G('page-espera').classList.contains('active'))renderEspera();
   updateEsperaBadge();
@@ -2525,7 +2646,7 @@ async function delUser(id){
 // ══════════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════════
-const PAGES=['dashboard','patients','cadastro','lembretes','espera','relatorios','mgmt','usuarios','historico','alertas'];
+const PAGES=['dashboard','patients','calendario','cadastro','lembretes','espera','relatorios','mgmt','usuarios','historico','alertas'];
 let routing=false; // true quando a troca de tela veio do botão voltar/avançar
 function pageFromHash(){
   const p=(location.hash.match(/^#\/([a-z]+)/)||[])[1];
@@ -2536,7 +2657,7 @@ function showPage(page){
   if((page==='mgmt'||page==='usuarios')&&!isGestor())page='dashboard';
   if(page==='historico'&&!histRef)page='cadastro';
   if(window.innerWidth<768)closeSidebar();
-  const titles={dashboard:'Início',patients:'Agendamentos',cadastro:'Pacientes',lembretes:'Lembretes',espera:'Lista de espera',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
+  const titles={dashboard:'Início',patients:'Agendamentos',calendario:'Calendário',cadastro:'Pacientes',lembretes:'Lembretes',espera:'Lista de espera',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
   document.getElementById('page-title').textContent=titles[page]||'';
   PAGES.forEach(p=>{
     document.getElementById(`page-${p}`)?.classList.toggle('active',p===page);
@@ -2547,6 +2668,7 @@ function showPage(page){
   if(!routing&&location.hash!=='#/'+page)history.pushState(null,'','#/'+page);
   if(page==='dashboard')renderDashboard();
   if(page==='cadastro')renderCadastro();
+  if(page==='calendario')renderCalendario();
   if(page==='lembretes'){if(!G('lem-data').value)G('lem-data').value=proximoDiaAtendimento();renderLembretes();}
   if(page==='espera')renderEspera();
   if(page==='patients')renderPTable();
