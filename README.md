@@ -15,6 +15,7 @@ Agendamento de transfusão, transfusão pediátrica, medicações e sangria tera
 - `supabase/007_horario_opcional.sql` — agendamento só por turno (horário opcional)
 - `supabase/008_email_paciente.sql` — e-mail no cadastro, para enviar a agenda por e-mail
 - `supabase/009_lembretes_e_espera.sql` — registro de lembretes enviados e lista de espera
+- `supabase/010_dados_bpa.sql` — nascimento, raça/cor e endereço do paciente para o BPA-I
 
 Não precisa de compilação. Qualquer hospedagem estática com HTTPS serve (GitHub Pages, Netlify).
 

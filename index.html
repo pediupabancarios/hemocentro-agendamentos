@@ -575,6 +575,18 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .mes-leg i{width:12px;height:12px;border-radius:4px;display:inline-block;}
 @media(max-width:900px){.sem-grid{grid-template-columns:1fr;}}
 @media(max-width:767px){.mes-cel{min-height:52px;padding:5px 4px;}.mes-cel .v{font-size:.58rem;}.cal-nav2{margin-left:0;width:100%;justify-content:space-between;}}
+.bpa-sec{margin:6px 0 4px;border:1.5px dashed var(--border);border-radius:10px;padding:8px 12px;}
+.bpa-sec summary{cursor:pointer;font-size:.76rem;font-weight:800;color:var(--T);}
+.bpa-sec[open] summary{margin-bottom:8px;}
+.bpa-cfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:12px;}
+.bpa-cfg label{display:block;font-size:.64rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.05em;}
+.bpa-cfg input,.bpa-cfg select{width:100%;margin-top:4px;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.82rem;background:#f8fafc;}
+.bpa-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;}
+.bpa-row:last-child{border-bottom:none;}
+.bpa-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--T);}
+.bpa-row .cid{width:80px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem;text-transform:uppercase;}
+.bpa-falta{font-size:.66rem;color:#b45309;font-weight:700;}
+@media(max-width:767px){.bpa-cfg input,.bpa-cfg select,.bpa-row .cid{font-size:16px;}}
 /* ══ FILTRO DO DASHBOARD ══ */
 .filter-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:700;margin-bottom:10px;}
 .filter-banner button{background:#fff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:4px 10px;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
@@ -654,6 +666,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <div class="ni" data-page="lembretes" onclick="showPage('lembretes')"><span class="nil"><span class="ico">📨</span>Lembretes</span></div>
       <div class="ni" data-page="espera" onclick="showPage('espera')"><span class="nil"><span class="ico">⏳</span>Lista de espera <span id="esp-badge" style="display:none;background:#d97706;color:#fff;border-radius:10px;font-size:.58rem;padding:1px 6px;font-weight:800;margin-left:4px">0</span></span></div>
       <div class="ns">Acompanhamento</div>
+      <div class="ni" data-page="bpa" onclick="showPage('bpa')"><span class="nil"><span class="ico">📄</span>BPA-I</span></div>
       <div class="ni" data-page="relatorios" onclick="showPage('relatorios')"><span class="nil"><span class="ico">📊</span>Relatórios</span></div>
       <div class="ni" data-page="alertas" onclick="showPage('alertas')"><span class="nil"><span class="ico">🔔</span>Alertas <span id="alert-count-badge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;font-size:.58rem;padding:1px 5px;font-weight:800;margin-left:4px">0</span></span></div>
       <div class="ns g-only">Gestão</div>
@@ -869,6 +882,24 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <div id="cal-body"></div>
     </div>
 
+    <div id="page-bpa" class="page">
+      <div class="page-hdr"><div><h2>📄 BPA-I</h2><p>Boletim de Produção Ambulatorial — dados individualizados, 3 pacientes por folha</p></div>
+        <button class="btn-add" onclick="printBPA()">🖨️ Gerar BPA-I</button></div>
+      <div class="panel">
+        <div class="bpa-cfg">
+          <label>Data do atendimento<input type="date" id="bpa-data" onchange="renderBPA()"/></label>
+          <label>Serviço<select id="bpa-svc" onchange="renderBPA()"><option value="">Todos</option><option>Transfusão</option><option>Pediátrica</option><option>Medicações</option><option>Sangria</option></select></label>
+          <label>Quem entra<select id="bpa-quem" onchange="renderBPA()"><option value="comp">Só quem compareceu</option><option value="todos">Compareceram e confirmados</option></select></label>
+          <label>CNS do profissional<input type="text" id="bpa-cnsprof" inputmode="numeric" maxlength="18" onchange="salvarBpaCfg()"/></label>
+          <label>Nome do profissional<input type="text" id="bpa-nomeprof" onchange="salvarBpaCfg()"/></label>
+          <label>Código do procedimento<input type="text" id="bpa-proc" inputmode="numeric" maxlength="10" onchange="salvarBpaCfg()"/></label>
+          <label>Folha inicial<input type="number" id="bpa-folha" min="1" max="99" value="1"/></label>
+        </div>
+        <div id="bpa-resumo" style="font-size:.78rem;font-weight:700;margin-bottom:8px"></div>
+        <div id="bpa-list"></div>
+      </div>
+    </div>
+
     <div id="page-lembretes" class="page">
       <div class="page-hdr"><div><h2>📨 Lembretes</h2><p>Avise os pacientes do próximo dia de atendimento</p></div>
         <div style="display:flex;gap:6px;align-items:center"><input type="date" id="lem-data" onchange="renderLembretes()" style="padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.82rem;background:#fff"/></div></div>
@@ -971,6 +1002,26 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <div class="mfg"><label>Tipo Sanguíneo</label><select id="pc-blood"><option value="">Não informado</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
     </div>
     <div class="mfg"><label>Gênero</label><select id="pc-genero"><option value="">Não informado</option><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select></div>
+    <details class="bpa-sec" id="pc-bpa">
+      <summary>📄 Dados para o BPA (nascimento, raça/cor, endereço)</summary>
+      <div class="mrow">
+        <div class="mfg"><label>Data de nascimento</label><input type="date" id="pc-nasc"/></div>
+        <div class="mfg"><label>Raça/cor</label><select id="pc-raca"><option value="">Não informada</option><option>Branca</option><option>Preta</option><option>Parda</option><option>Indígena</option><option>Amarela</option></select></div>
+      </div>
+      <div class="mrow">
+        <div class="mfg" style="flex:3"><label>Endereço</label><input type="text" id="pc-end" placeholder="Rua, avenida…"/></div>
+        <div class="mfg"><label>Número</label><input type="text" id="pc-num" maxlength="10"/></div>
+      </div>
+      <div class="mrow">
+        <div class="mfg"><label>Complemento</label><input type="text" id="pc-compl" maxlength="40"/></div>
+        <div class="mfg"><label>Bairro</label><input type="text" id="pc-bairro"/></div>
+      </div>
+      <div class="mrow">
+        <div class="mfg"><label>Município</label><input type="text" id="pc-mun" placeholder="João Pessoa"/></div>
+        <div class="mfg"><label>CEP</label><input type="text" id="pc-cep" inputmode="numeric" placeholder="58000-000"/></div>
+      </div>
+      <div class="mfg"><label>Código do município (IBGE)</label><input type="text" id="pc-codmun" inputmode="numeric" placeholder="João Pessoa: 2507507"/></div>
+    </details>
     <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-pac')">Cancelar</button><button class="btn-confirm" onclick="savePac()">💾 Salvar cadastro</button></div>
   </div>
 </div>
@@ -1070,8 +1121,10 @@ let espera=[], esperaAgendandoId=null;
 function espFromRow(r){return{id:r.id,pacienteId:r.paciente_id,apptDate:r.data,service:r.servico,turn:r.turno,gender:r.genero||'',obs:r.obs||'',criadoPor:r.criado_por||'',criadoEm:r.criado_em};}
 const G=id=>document.getElementById(id);
 const onlyDigits=v=>String(v||'').replace(/\D/g,'');
-function pacFromRow(r){return{id:r.id,nome:r.nome,cpf:r.cpf||'',cns:r.cns||'',phone:r.telefone||'',email:r.email||'',blood:r.tipo_sanguineo||'',gender:r.genero||''};}
-function pacToRow(p){return{nome:p.nome,cpf:p.cpf||null,cns:p.cns||null,telefone:p.phone||'',email:p.email||null,tipo_sanguineo:p.blood||'',genero:p.gender||''};}
+function pacFromRow(r){return{id:r.id,nome:r.nome,cpf:r.cpf||'',cns:r.cns||'',phone:r.telefone||'',email:r.email||'',blood:r.tipo_sanguineo||'',gender:r.genero||'',
+  dob:r.nascimento||'',raca:r.raca_cor||'',end:r.endereco||'',num:r.numero||'',compl:r.complemento||'',bairro:r.bairro||'',mun:r.municipio||'',cep:r.cep||'',codMun:r.cod_municipio||''};}
+function pacToRow(p){return{nome:p.nome,cpf:p.cpf||null,cns:p.cns||null,telefone:p.phone||'',email:p.email||null,tipo_sanguineo:p.blood||'',genero:p.gender||'',
+  nascimento:p.dob||null,raca_cor:p.raca||'',endereco:p.end||'',numero:p.num||'',complemento:p.compl||'',bairro:p.bairro||'',municipio:p.mun||'',cep:p.cep||null,cod_municipio:p.codMun||null};}
 const emailOk=e=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 const pacById=id=>id?pacientes.find(p=>p.id===id)||null:null;
 function fmtCpf(d){return d?d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4'):'';}
@@ -1982,7 +2035,11 @@ function openPacModal(id,fromForm=false){
   const p=pacById(id);
   G('pc-title').textContent=p?'Editar Cadastro do Paciente':'Novo Paciente';
   G('pc-nome').value=p?.nome||'';G('pc-cpf').value=fmtCpf(p?.cpf||'');G('pc-cns').value=fmtCns(p?.cns||'');
-  G('pc-tel').value=p?.phone||'';G('pc-email').value=p?.email||'';G('pc-blood').value=p?.blood||'';G('pc-genero').value=p?.gender||'';
+  G('pc-tel').value=p?.phone||'';G('pc-email').value=p?.email||'';
+  G('pc-nasc').value=p?.dob||'';G('pc-raca').value=p?.raca||'';G('pc-end').value=p?.end||'';G('pc-num').value=p?.num||'';
+  G('pc-compl').value=p?.compl||'';G('pc-bairro').value=p?.bairro||'';G('pc-mun').value=p?.mun||(p?'':'João Pessoa');
+  G('pc-cep').value=p?.cep?p.cep.replace(/^(\d{5})(\d{3})$/,'$1-$2'):'';G('pc-codmun').value=p?.codMun||(p?'':'2507507');
+  G('pc-bpa').open=!!(p&&(!p.dob||!p.end));G('pc-blood').value=p?.blood||'';G('pc-genero').value=p?.gender||'';
   if(!p&&fromForm){
     const q=G('m-pac-busca').value.trim(),d=onlyDigits(q);
     if(d.length===11&&d.length===q.replace(/[.\-\s]/g,'').length)G('pc-cpf').value=fmtCpf(d);
@@ -1997,6 +2054,11 @@ function openPacModal(id,fromForm=false){
 async function savePac(){
   if(denyEdit()||busy)return;
   const nome=G('pc-nome').value.trim(),cpf=onlyDigits(G('pc-cpf').value),cns=onlyDigits(G('pc-cns').value),phone=G('pc-tel').value.trim(),email=G('pc-email').value.trim().toLowerCase();
+  const bpa={dob:G('pc-nasc').value,raca:G('pc-raca').value,end:G('pc-end').value.trim(),num:G('pc-num').value.trim(),compl:G('pc-compl').value.trim(),
+    bairro:G('pc-bairro').value.trim(),mun:G('pc-mun').value.trim(),cep:onlyDigits(G('pc-cep').value),codMun:onlyDigits(G('pc-codmun').value)};
+  if(bpa.dob&&bpa.dob>hoje()){showToast('⚠️ Data de nascimento no futuro','warn');return;}
+  if(bpa.cep&&bpa.cep.length!==8){showToast('⚠️ CEP deve ter 8 números','warn');return;}
+  if(bpa.codMun&&!/^\d{6,7}$/.test(bpa.codMun)){showToast('⚠️ Código do município (IBGE) deve ter 7 números','warn');return;}
   if(email&&!emailOk(email)){showToast('⚠️ E-mail inválido','warn');return;}
   if(!nome){showToast('⚠️ Informe o nome do paciente','warn');return;}
   if(cpf&&!cpfValid(cpf)){showToast('⚠️ CPF inválido: confira os números','warn');return;}
@@ -2006,7 +2068,7 @@ async function savePac(){
   if(dupDoc){showToast(`⚠️ Este documento já é de ${dupDoc.nome}. Busque-o pelo número.`,'warn');return;}
   if(!pacEditId&&pacientes.some(p=>p.nome.toLowerCase()===nome.toLowerCase())
     &&!confirm(`Já existe paciente chamado "${nome}".\n\nOK = cadastrar outra pessoa com o mesmo nome\nCancelar = voltar e escolher o existente na busca`))return;
-  const row=pacToRow({nome,cpf,cns,phone,email,blood:G('pc-blood').value,gender:G('pc-genero').value});
+  const row=pacToRow({nome,cpf,cns,phone,email,...bpa,blood:G('pc-blood').value,gender:G('pc-genero').value});
   const editando=pacEditId;
   busy=true;
   try{
@@ -2224,6 +2286,185 @@ function openDel(id){
   G('del-serie-l').textContent=`Excluir também os próximos ${prox.length} agendamento(s) desta série`;
   document.getElementById('modal-del').classList.add('open');
 }
+// ══ BPA-I ══
+const BPA_FIXO={estab:'HEMOCENTRO DA PARAIBA',cnes:'2399598',cbo:'223505',equipe:'ENFERMAGEM',nacionalidade:'10',catAtend:'1'};
+// Profissional e procedimento ficam salvos só neste navegador, por conveniência.
+function carregarBpaCfg(){
+  let c={};try{c=JSON.parse(localStorage.getItem('ag_bpa_cfg')||'{}');}catch(e){}
+  if(!G('bpa-cnsprof').value)G('bpa-cnsprof').value=c.cns||'';
+  if(!G('bpa-nomeprof').value)G('bpa-nomeprof').value=c.nome||'';
+  if(!G('bpa-proc').value)G('bpa-proc').value=c.proc||'0301010048';
+}
+function salvarBpaCfg(){
+  try{localStorage.setItem('ag_bpa_cfg',JSON.stringify({cns:onlyDigits(G('bpa-cnsprof').value),nome:G('bpa-nomeprof').value.trim(),proc:onlyDigits(G('bpa-proc').value)}));}catch(e){}
+}
+function bpaLista(){
+  const ds=G('bpa-data').value||hoje(),svc=G('bpa-svc').value,quem=G('bpa-quem').value;
+  const st=quem==='comp'?['Compareceu']:['Compareceu','Confirmado'];
+  return patients.filter(p=>effDate(p)===ds&&st.includes(p.status)&&(!svc||p.service===svc)).sort(byDateTime);
+}
+function bpaFaltas(pc){
+  if(!pc)return['cadastro'];
+  const f=[];
+  if(!pc.cns)f.push('CNS');if(!pc.dob)f.push('nascimento');if(!pc.raca)f.push('raça/cor');
+  if(!pc.end)f.push('endereço');if(!pc.cep)f.push('CEP');if(!pc.codMun)f.push('cód. município');
+  return f;
+}
+const bpaCid={};
+function renderBPA(){
+  const el=G('bpa-list');if(!el)return;
+  const lista=bpaLista();
+  const sel=lista.filter(a=>bpaCid[a.id]?.sel!==false).length;
+  G('bpa-resumo').textContent=lista.length?`${sel} paciente(s) selecionado(s) · ${Math.ceil(sel/3)||0} folha(s)`:'';
+  if(!lista.length){el.innerHTML=`<div style="text-align:center;padding:24px;color:var(--light);font-size:.82rem">Nenhum paciente ${G('bpa-quem').value==='comp'?'marcado como "Compareceu"':'compareceu ou está confirmado'} neste dia.</div>`;return;}
+  el.innerHTML=lista.map(raw=>{
+    const a=escObj(raw),pc=pacById(raw.pacienteId),f=bpaFaltas(pc),c=bpaCid[raw.id]||{};
+    return`<div class="bpa-row"><input type="checkbox" ${c.sel===false?'':'checked'} onchange="(bpaCid['${a.id}']=bpaCid['${a.id}']||{}).sel=this.checked;renderBPA()"/>
+      <div style="flex:1;min-width:0"><div class="an">${a.name}</div><div class="ap">${a.service} · ${esc(raw.turn)} · ${statusBadge(raw.status)}</div>
+      ${f.length?`<div class="bpa-falta">Falta no cadastro: ${f.join(', ')} (sai em branco para preencher à mão)</div>`:''}</div>
+      <input class="cid" placeholder="CID-10" maxlength="4" value="${esc(c.cid||'')}" oninput="(bpaCid['${a.id}']=bpaCid['${a.id}']||{}).cid=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"/>
+      ${pc&&canEdit()?`<button class="tbl-act" title="Completar cadastro" onclick="openPacModal('${pc.id}')">✏️</button>`:''}</div>`;
+  }).join('');
+}
+function bpaIdade(dob,ds){
+  if(!dob)return'';
+  const n=new Date(dob+'T12:00'),d=new Date(ds+'T12:00');
+  let i=d.getFullYear()-n.getFullYear();
+  if(d.getMonth()<n.getMonth()||(d.getMonth()===n.getMonth()&&d.getDate()<n.getDate()))i--;
+  return i>=0?String(i):'';
+}
+function printBPA(){
+  salvarBpaCfg();
+  const lista=bpaLista().filter(a=>bpaCid[a.id]?.sel!==false);
+  if(!lista.length){showToast('⚠️ Nenhum paciente selecionado para o BPA','warn');return;}
+  const cnsProf=onlyDigits(G('bpa-cnsprof').value),nomeProf=G('bpa-nomeprof').value.trim();
+  const proc=onlyDigits(G('bpa-proc').value)||'0301010048';
+  let folha=Math.max(1,parseInt(G('bpa-folha').value,10)||1);
+  // Uma letra por quadradinho; menos letras que quadrados deixa os demais vazios.
+  const boxes=(v,n,cls='')=>{const c=String(v??'').slice(0,n).padEnd(n,' ').split('');return`<span class="bx ${cls}">${c.map(x=>`<i>${x===' '?'':esc(x)}</i>`).join('')}</span>`;};
+  const ddmmaaaa=ds=>ds?ds.split('-').reverse().join(''):'';
+  const seq=(n,a)=>{
+    const pc=a?pacById(a.pacienteId):null;
+    const tel=a?normPhone(phoneOf(a)):'';
+    const sexo=a?(a.gender||pc?.gender||''):'';
+    const raca=pc?.raca||'';
+    const chk=(r,lbl)=>`<span class="ck"><span class="sq">${raca===r?'X':''}</span>${lbl}</span>`;
+    return`<div class="seq">
+      <div class="seqh"><span class="tab">SEQUÊNCIA ${n}</span><span class="bar2">IDENTIFICAÇÃO DO PACIENTE</span></div>
+      <div class="fld"><div class="lb">NOME DO PACIENTE</div><div class="ln">${esc(a?.name||'')}</div></div>
+      <div class="row">
+        <div class="fld"><div class="lb">CARTÃO NACIONAL DE SAÚDE (CNS)</div>${boxes(pc?.cns||'',15)}</div>
+        <div class="fld"><div class="lb">DATA DE NASCIMENTO</div>${boxes(ddmmaaaa(pc?.dob),8)}</div>
+        <div class="fld"><div class="lb">IDADE</div>${boxes(a?bpaIdade(pc?.dob,a.apptDate):'',3)}</div>
+      </div>
+      <div class="row mid">
+        <div class="fld"><div class="lb">NACIONALIDADE</div><div class="ln nat">${BPA_FIXO.nacionalidade}</div></div>
+        ${chk('Branca','BRANCA')}${chk('Preta','PRETA')}${chk('Parda','PARDA')}${chk('Indígena','INDÍGENA')}${chk('Amarela','AMARELA')}
+        <div class="fld sexo"><div class="lb c">SEXO</div><span class="bx"><i class="l">M</i><i>${sexo==='Masculino'?'X':''}</i><i class="l">F</i><i>${sexo==='Feminino'?'X':''}</i></span></div>
+      </div>
+      <div class="row">
+        <div class="fld grow"><div class="lb">ENDEREÇO DO PACIENTE</div><div class="ln">${esc(pc?.end||'')}</div></div>
+        <div class="fld w25"><div class="lb">NÚMERO</div><div class="ln">${esc(pc?.num||'')}</div></div>
+      </div>
+      <div class="row">
+        <div class="fld w45"><div class="lb">COMPLEMENTO</div><div class="ln">${esc(pc?.compl||'')}</div></div>
+        <div class="fld grow"><div class="lb">BAIRRO</div><div class="ln">${esc(pc?.bairro||'')}</div></div>
+        <div class="fld grow"><div class="lb">MUNICÍPIO</div><div class="ln">${esc(pc?.mun||'')}</div></div>
+      </div>
+      <div class="row">
+        <div class="fld"><div class="lb">CEP</div>${boxes(pc?.cep||'',8)}</div>
+        <div class="fld"><div class="lb">CÓD. MUNICÍPIO</div>${boxes(pc?.codMun||'',7)}</div>
+        <div class="fld"><div class="lb">DDD</div>${boxes(tel.slice(0,2),2)}</div>
+        <div class="fld"><div class="lb">TELEFONE PARA CONTATO</div>${boxes(tel.slice(2),9)}</div>
+      </div>
+      <div class="bar">PROCEDIMENTO REALIZADO</div>
+      <div class="row">
+        <div class="fld"><div class="lb">DATA DO ATENDIMENTO</div>${boxes(a?ddmmaaaa(a.apptDate):'',8)}</div>
+        <div class="fld"><div class="lb">CÓDIGO DO PROCEDIMENTO</div>${boxes(proc,10,'b')}</div>
+        <div class="fld"><div class="lb">QTDE</div>${boxes(a?'01':'',2)}</div>
+        <div class="fld"><div class="lb">CID - 10</div>${boxes(a?(bpaCid[a.id]?.cid||''):'',4)}</div>
+        <div class="fld"><div class="lb">CAT ATEND</div>${boxes(BPA_FIXO.catAtend,1,'b')}</div>
+      </div>
+      <div class="fld"><div class="lb">ASSINATURA DO PACIENTE OU RESPONSÁVEL</div><div class="ln sig">X</div></div>
+    </div>`;
+  };
+  const paginas=[];
+  for(let i=0;i<lista.length;i+=3){
+    const g=lista.slice(i,i+3);
+    paginas.push(`<div class="pg">
+      <div class="hdr">
+        <div class="sus"><div class="cruz"><b></b><b></b></div><div class="sust"><div>Ministério da Saúde</div><div class="s">S U S</div><div>Sistema Único de Saúde</div></div></div>
+        <div class="tit">B P A - I</div>
+        <div class="tit2"><div class="t1">Boletim de Produção Ambulatorial</div><div class="t2">Dados Individualizados</div></div>
+      </div>
+      <div class="bar">IDENTIFICAÇÃO DO ESTABELECIMENTO DE SAÚDE</div>
+      <div class="row">
+        <div class="fld grow"><div class="lb">NOME DO ESTABELECIMENTO DE SAÚDE</div><div class="ln big">${BPA_FIXO.estab}</div></div>
+        <div class="fld"><div class="lb c">CNES</div>${boxes(BPA_FIXO.cnes,7,'b')}</div>
+      </div>
+      <div class="bar">IDENTIFICAÇÃO DO PROFISSIONAL</div>
+      <div class="row">
+        <div class="fld"><div class="lb">CARTÃO NACIONAL DE SAÚDE (CNS)</div>${boxes(cnsProf,15)}</div>
+        <div class="fld grow"><div class="lb">NOME DO PROFISSIONAL</div><div class="ln">${esc(nomeProf)}</div></div>
+      </div>
+      <div class="row">
+        <div class="fld"><div class="lb c">CBO</div>${boxes(BPA_FIXO.cbo,6,'b')}</div>
+        <div class="fld grow"><div class="lb">EQUIPE</div><div class="ln big">${BPA_FIXO.equipe}</div></div>
+        <div class="fld"><div class="lb">FOLHA</div>${boxes(String(folha++).padStart(2,'0'),2)}</div>
+      </div>
+      ${[0,1,2].map(k=>seq(k+1,g[k])).join('')}
+      <div class="foot"><div>CARIMBO E ASSINATURA RESPONSÁVEL PELO ATENDIMENTO</div><div>GESTOR ESTADUAL / MUNICIPAL</div></div>
+    </div>`);
+  }
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>BPA-I ${dmy(G('bpa-data').value||hoje())}</title>
+  <style>
+    @page{size:A4 portrait;margin:7mm 8mm;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,Helvetica,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .pg{width:194mm;border:1.2px solid #000;page-break-after:always;break-after:page;}
+    .pg:last-child{page-break-after:auto;break-after:auto;}
+    .hdr{display:flex;align-items:stretch;border-bottom:1.2px solid #000;height:16mm;}
+    .sus{display:flex;align-items:center;gap:2mm;width:60mm;border-right:1.2px solid #000;padding:1mm 2mm;}
+    .cruz{position:relative;width:12mm;height:13mm;}
+    .cruz b{position:absolute;background:#000;}
+    .cruz b:first-child{left:4mm;top:0;width:4mm;height:13mm;}
+    .cruz b:last-child{left:0;top:4.5mm;width:12mm;height:4mm;}
+    .sust{font-size:8pt;line-height:1.1;}
+    .sust .s{font-family:'Times New Roman',serif;font-weight:900;font-size:14pt;letter-spacing:3px;}
+    .tit{flex:1;display:flex;align-items:center;justify-content:center;font-family:'Times New Roman',serif;font-size:20pt;letter-spacing:4px;}
+    .tit2{width:82mm;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:1mm;}
+    .tit2 .t1{font-size:11pt;font-weight:bold;white-space:nowrap;}.tit2 .t2{font-size:10pt;font-weight:bold;}
+    .bar{background:#000;color:#fff;text-align:center;font-size:6.6pt;font-weight:bold;letter-spacing:.4px;padding:.3mm 0;}
+    .row{display:flex;gap:2mm;padding:0 1.5mm;align-items:flex-end;}
+    .row.mid{align-items:center;}
+    .fld{padding:.1mm 0 .4mm;}
+    .fld.grow{flex:1;}.fld.w25{width:25mm;}.fld.w45{width:45mm;}
+    .lb{font-size:5pt;font-weight:bold;text-transform:uppercase;line-height:1.2;}
+    .lb.c{text-align:center;}
+    .ln{border:1px solid #000;min-height:4.5mm;font-size:8pt;padding:.2mm 1.2mm;display:flex;align-items:center;}
+    .ln.big{font-size:9.5pt;font-weight:bold;}
+    .ln.nat{width:30mm;justify-content:center;font-weight:bold;font-size:10pt;}
+    .ln.sig{font-weight:bold;font-size:10pt;min-height:5mm;}
+    .bx{display:inline-flex;border:1px solid #000;}
+    .bx i{font-style:normal;width:4.4mm;height:4.5mm;border-left:1px solid #000;display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:bold;}
+    .bx i:first-child{border-left:none;}
+    .bx i.l{width:5.2mm;}
+    .ck{display:inline-flex;align-items:center;gap:.8mm;font-size:5.6pt;font-weight:bold;}
+    .ck .sq{width:6mm;height:4.5mm;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-size:9pt;}
+    .fld.sexo{margin-left:auto;}
+    .seq{border-top:1.2px solid #000;}
+    .seqh{display:flex;align-items:stretch;}
+    .seqh .tab{background:#000;color:#fff;font-size:8.5pt;font-weight:bold;padding:.4mm 4mm;letter-spacing:.5px;}
+    .seqh .bar2{flex:1;background:#000;color:#fff;font-size:6.6pt;font-weight:bold;text-align:center;padding-top:.6mm;border-top:2mm solid #fff;}
+    .foot{display:flex;justify-content:space-between;border-top:1.2px solid #000;padding:1mm 2mm 6mm;font-size:5.6pt;font-weight:bold;}
+    @media screen{body{background:#e5e7eb;padding:8px;}.pg{background:#fff;margin:0 auto 10px;}}
+  </style></head><body>${paginas.join('')}
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  const w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else showToast('⚠️ Permita pop-ups para gerar o BPA','warn');
+}
+
 // ══ Calendário: semana e mês ══
 let calTab='semana', calRef=new Date(), calSvc='';
 const SVC_KEYS={'Transfusão':{M:['T.fmanha','T.mmanha'],T:['T.ftarde','T.mtarde'],ico:'💉'},'Pediátrica':{M:['P.manha'],T:['P.tarde'],ico:'👶'},'Medicações':{M:['M.manha'],T:['M.tarde'],ico:'💊'},'Sangria':{M:['S.fmanha','S.mmanha'],T:['S.ftarde','S.mtarde'],ico:'🩸'}};
@@ -2532,6 +2773,7 @@ function refreshViews(background=false){
   renderDashboard();renderPTable();
   if(G('page-cadastro').classList.contains('active'))renderCadastro();
   if(G('page-calendario').classList.contains('active'))renderCalendario();
+  if(G('page-bpa').classList.contains('active'))renderBPA();
   if(G('page-lembretes').classList.contains('active'))renderLembretes();
   if(G('page-espera').classList.contains('active'))renderEspera();
   updateEsperaBadge();
@@ -2646,7 +2888,7 @@ async function delUser(id){
 // ══════════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════════
-const PAGES=['dashboard','patients','calendario','cadastro','lembretes','espera','relatorios','mgmt','usuarios','historico','alertas'];
+const PAGES=['dashboard','patients','calendario','bpa','cadastro','lembretes','espera','relatorios','mgmt','usuarios','historico','alertas'];
 let routing=false; // true quando a troca de tela veio do botão voltar/avançar
 function pageFromHash(){
   const p=(location.hash.match(/^#\/([a-z]+)/)||[])[1];
@@ -2657,7 +2899,7 @@ function showPage(page){
   if((page==='mgmt'||page==='usuarios')&&!isGestor())page='dashboard';
   if(page==='historico'&&!histRef)page='cadastro';
   if(window.innerWidth<768)closeSidebar();
-  const titles={dashboard:'Início',patients:'Agendamentos',calendario:'Calendário',cadastro:'Pacientes',lembretes:'Lembretes',espera:'Lista de espera',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
+  const titles={dashboard:'Início',patients:'Agendamentos',calendario:'Calendário',bpa:'BPA-I',cadastro:'Pacientes',lembretes:'Lembretes',espera:'Lista de espera',relatorios:'Relatórios',mgmt:'Painel do Gestor',usuarios:'Usuários',historico:'Histórico do Paciente',alertas:'Central de Alertas'};
   document.getElementById('page-title').textContent=titles[page]||'';
   PAGES.forEach(p=>{
     document.getElementById(`page-${p}`)?.classList.toggle('active',p===page);
@@ -2669,6 +2911,7 @@ function showPage(page){
   if(page==='dashboard')renderDashboard();
   if(page==='cadastro')renderCadastro();
   if(page==='calendario')renderCalendario();
+  if(page==='bpa'){if(!G('bpa-data').value)G('bpa-data').value=hoje();carregarBpaCfg();renderBPA();}
   if(page==='lembretes'){if(!G('lem-data').value)G('lem-data').value=proximoDiaAtendimento();renderLembretes();}
   if(page==='espera')renderEspera();
   if(page==='patients')renderPTable();
