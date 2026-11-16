@@ -853,6 +853,16 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         <div class="blq-list" id="blq-list"></div>
       </div>
       <div class="cap-card">
+        <div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#d1fae5,#ecfdf5)">👩‍⚕️</div><div><h3>Profissionais do BPA</h3><p>Aparecem para escolher na tela BPA-I</p></div></div>
+        <div class="blq-form">
+          <input type="text" id="prof-nome" placeholder="Nome completo"/>
+          <input type="text" id="prof-cns" inputmode="numeric" placeholder="CNS (15 números)" style="flex:0 1 170px"/>
+          <input type="text" id="prof-cbo" inputmode="numeric" value="223505" title="CBO" style="flex:0 1 90px"/>
+          <button class="btn-rel" onclick="addProf()">+ Adicionar</button>
+        </div>
+        <div class="blq-list" id="prof-list"></div>
+      </div>
+      <div class="cap-card">
         <div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#e2e8f0,#f8fafc)">💾</div><div><h3>Backup dos dados</h3><p>Cópia de segurança dos agendamentos</p></div></div>
         <div class="backup-actions">
           <button class="btn-rel primary" onclick="exportBackup()">📤 Exportar backup</button>
@@ -890,8 +900,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
           <label>Data do atendimento<input type="date" id="bpa-data" onchange="renderBPA()"/></label>
           <label>Serviço<select id="bpa-svc" onchange="renderBPA()"><option value="">Todos</option><option>Transfusão</option><option>Pediátrica</option><option>Medicações</option><option>Sangria</option></select></label>
           <label>Quem entra<select id="bpa-quem" onchange="renderBPA()"><option value="comp">Só quem compareceu</option><option value="todos">Compareceram e confirmados</option></select></label>
-          <label>CNS do profissional<input type="text" id="bpa-cnsprof" inputmode="numeric" maxlength="18" onchange="salvarBpaCfg()"/></label>
+          <label>Profissional<select id="bpa-prof" onchange="escolherProf()"></select></label>
           <label>Nome do profissional<input type="text" id="bpa-nomeprof" onchange="salvarBpaCfg()"/></label>
+          <label>CNS do profissional<input type="text" id="bpa-cnsprof" inputmode="numeric" maxlength="18" onchange="salvarBpaCfg()"/><span id="bpa-cns-aviso" style="display:none;font-size:.62rem;color:#b45309;font-weight:700;text-transform:none;letter-spacing:0">⚠️ CNS não confere: verifique o cartão</span></label>
           <label>Código do procedimento<input type="text" id="bpa-proc" inputmode="numeric" maxlength="10" onchange="salvarBpaCfg()"/></label>
           <label>Folha inicial<input type="number" id="bpa-folha" min="1" max="99" value="1"/></label>
         </div>
@@ -1117,7 +1128,8 @@ let calY=new Date().getFullYear(), calM=new Date().getMonth();
 let dashFilter=null, histRef=null, capsDraft=null, busy=false;
 let diasSemana=[0,1,2,3,4,5,6], bloqueios=new Map();
 let pacientes=[], selPac=null, pacEditId=null, pacFromForm=false;
-let espera=[], esperaAgendandoId=null;
+let espera=[], esperaAgendandoId=null, profissionais=[];
+function profFromRow(r){return{id:r.id,nome:r.nome,cns:r.cns||'',cbo:r.cbo||'223505',ativo:r.ativo!==false};}
 function espFromRow(r){return{id:r.id,pacienteId:r.paciente_id,apptDate:r.data,service:r.servico,turn:r.turno,gender:r.genero||'',obs:r.obs||'',criadoPor:r.criado_por||'',criadoEm:r.criado_em};}
 const G=id=>document.getElementById(id);
 const onlyDigits=v=>String(v||'').replace(/\D/g,'');
@@ -1199,7 +1211,8 @@ async function loadData(){
     fetchAll('ag_pacientes',pacFromRow).catch(e=>{console.warn('Cadastro de pacientes indisponível',e);return null;})]);
   if(v.error)throw v.error;
   patients=p;if(pc)pacientes=pc;
-  try{espera=await fetchAll('ag_espera',espFromRow);}catch(e){console.warn('Lista de espera indisponível',e);}caps=normalizeCaps(v.data.caps);
+  try{espera=await fetchAll('ag_espera',espFromRow);}catch(e){console.warn('Lista de espera indisponível',e);}
+  try{profissionais=(await fetchAll('ag_profissionais',profFromRow)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));}catch(e){console.warn('Profissionais indisponíveis',e);}caps=normalizeCaps(v.data.caps);
   diasSemana=Array.isArray(v.data.dias_semana)?v.data.dias_semana:[0,1,2,3,4,5,6];
   if(b.error)console.warn('Bloqueios indisponíveis',b.error);
   else bloqueios=new Map(b.data.map(x=>[x.data,x.motivo||'']));
@@ -1829,6 +1842,7 @@ function renderMgmt(){
   capsDraft=JSON.parse(JSON.stringify(caps)); // "+/−" só valem depois de Aplicar
   renderLegacyBox();
   renderDias();
+  renderProfs();
   loadBackups();
   mkCC('cap-T',[{l:'Feminino Manhã',k:'fmanha'},{l:'Feminino Tarde',k:'ftarde'},{l:'Masculino Manhã',k:'mmanha'},{l:'Masculino Tarde',k:'mtarde'}],'T');
   mkCC('cap-P',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'P');
@@ -2291,12 +2305,56 @@ const BPA_FIXO={estab:'HEMOCENTRO DA PARAIBA',cnes:'2399598',cbo:'223505',equipe
 // Profissional e procedimento ficam salvos só neste navegador, por conveniência.
 function carregarBpaCfg(){
   let c={};try{c=JSON.parse(localStorage.getItem('ag_bpa_cfg')||'{}');}catch(e){}
-  if(!G('bpa-cnsprof').value)G('bpa-cnsprof').value=c.cns||'';
-  if(!G('bpa-nomeprof').value)G('bpa-nomeprof').value=c.nome||'';
+  const ativos=profissionais.filter(p=>p.ativo);
+  G('bpa-prof').innerHTML=ativos.map(p=>`<option value="${esc(p.id)}">${esc(p.nome)}</option>`).join('')+'<option value="">Outro (digitar)</option>';
+  const escolhido=ativos.find(p=>p.id===c.profId)||(c.profId===''?null:ativos[0]);
+  G('bpa-prof').value=escolhido?escolhido.id:'';
+  if(escolhido){G('bpa-nomeprof').value=escolhido.nome;G('bpa-cnsprof').value=escolhido.cns;}
+  else{if(!G('bpa-cnsprof').value)G('bpa-cnsprof').value=c.cns||'';if(!G('bpa-nomeprof').value)G('bpa-nomeprof').value=c.nome||'';}
   if(!G('bpa-proc').value)G('bpa-proc').value=c.proc||'0301010048';
+  avisoCnsProf();
 }
+function escolherProf(){
+  const p=profissionais.find(x=>x.id===G('bpa-prof').value);
+  G('bpa-nomeprof').value=p?p.nome:'';G('bpa-cnsprof').value=p?p.cns:'';
+  salvarBpaCfg();
+  if(!p)G('bpa-nomeprof').focus();
+}
+function avisoCnsProf(){
+  const c=onlyDigits(G('bpa-cnsprof').value);
+  G('bpa-cns-aviso').style.display=c&&!cnsValid(c)?'block':'none';
+}
+function profEscolhido(){return profissionais.find(x=>x.id===G('bpa-prof').value)||null;}
 function salvarBpaCfg(){
-  try{localStorage.setItem('ag_bpa_cfg',JSON.stringify({cns:onlyDigits(G('bpa-cnsprof').value),nome:G('bpa-nomeprof').value.trim(),proc:onlyDigits(G('bpa-proc').value)}));}catch(e){}
+  avisoCnsProf();
+  try{localStorage.setItem('ag_bpa_cfg',JSON.stringify({profId:G('bpa-prof').value,cns:onlyDigits(G('bpa-cnsprof').value),nome:G('bpa-nomeprof').value.trim(),proc:onlyDigits(G('bpa-proc').value)}));}catch(e){}
+}
+// ── Profissionais (Painel do Gestor) ──
+function renderProfs(){
+  const el=G('prof-list');if(!el)return;
+  el.innerHTML=profissionais.length?profissionais.map(p=>`<div class="blq-item"><span><strong>${esc(p.nome)}</strong> · CNS ${p.cns?esc(fmtCns(p.cns)):'—'}${p.cns&&!cnsValid(p.cns)?' <span style="color:#b45309;font-weight:700">⚠️ não confere</span>':''} · CBO ${esc(p.cbo)}</span><button class="tbl-act del" title="Remover" onclick="delProf('${p.id}')">🗑️</button></div>`).join('')
+    :'<div style="font-size:.74rem;color:var(--light);padding:6px 0">Nenhum profissional cadastrado</div>';
+}
+async function addProf(){
+  if(!isGestor())return;
+  const nome=G('prof-nome').value.trim().toUpperCase(),cns=onlyDigits(G('prof-cns').value),cbo=onlyDigits(G('prof-cbo').value)||'223505';
+  if(!nome){showToast('⚠️ Informe o nome do profissional','warn');return;}
+  if(cns&&cns.length!==15){showToast('⚠️ O CNS tem 15 números','warn');return;}
+  if(cbo.length!==6){showToast('⚠️ O CBO tem 6 números','warn');return;}
+  if(cns&&!cnsValid(cns)&&!confirm('Este CNS não passa na conferência do dígito verificador. Cadastrar mesmo assim?'))return;
+  const{data,error}=await sb.from('ag_profissionais').insert({nome,cns:cns||null,cbo}).select();
+  if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Sem permissão'}`,'err');return;}
+  profissionais=[...profissionais,profFromRow(data[0])].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  G('prof-nome').value='';G('prof-cns').value='';G('prof-cbo').value='223505';
+  renderProfs();showToast('✅ Profissional cadastrado','ok');
+}
+async function delProf(id){
+  if(!isGestor())return;
+  const p=profissionais.find(x=>x.id===id);
+  if(!confirm(`Remover ${p?.nome||'este profissional'} da lista do BPA?`))return;
+  const{data,error}=await sb.from('ag_profissionais').delete().eq('id',id).select();
+  if(error||!data?.length){showToast(`❌ ${error?dbMsg(error):'Não foi possível remover'}`,'err');return;}
+  profissionais=profissionais.filter(x=>x.id!==id);renderProfs();showToast('Profissional removido','ok');
 }
 function bpaLista(){
   const ds=G('bpa-data').value||hoje(),svc=G('bpa-svc').value,quem=G('bpa-quem').value;
@@ -2337,7 +2395,9 @@ function printBPA(){
   salvarBpaCfg();
   const lista=bpaLista().filter(a=>bpaCid[a.id]?.sel!==false);
   if(!lista.length){showToast('⚠️ Nenhum paciente selecionado para o BPA','warn');return;}
-  const cnsProf=onlyDigits(G('bpa-cnsprof').value),nomeProf=G('bpa-nomeprof').value.trim();
+  const cnsProf=onlyDigits(G('bpa-cnsprof').value),nomeProf=G('bpa-nomeprof').value.trim().toUpperCase();
+  const cboProf=profEscolhido()?.cbo||BPA_FIXO.cbo;
+  if(cnsProf&&!cnsValid(cnsProf))showToast('⚠️ O CNS do profissional não confere: confira antes de entregar o BPA','warn');
   const proc=onlyDigits(G('bpa-proc').value)||'0301010048';
   let folha=Math.max(1,parseInt(G('bpa-folha').value,10)||1);
   // Uma letra por quadradinho; menos letras que quadrados deixa os demais vazios.
@@ -2408,7 +2468,7 @@ function printBPA(){
         <div class="fld grow"><div class="lb">NOME DO PROFISSIONAL</div><div class="ln">${esc(nomeProf)}</div></div>
       </div>
       <div class="row">
-        <div class="fld"><div class="lb c">CBO</div>${boxes(BPA_FIXO.cbo,6,'b')}</div>
+        <div class="fld"><div class="lb c">CBO</div>${boxes(cboProf,6,'b')}</div>
         <div class="fld grow"><div class="lb">EQUIPE</div><div class="ln big">${BPA_FIXO.equipe}</div></div>
         <div class="fld"><div class="lb">FOLHA</div>${boxes(String(folha++).padStart(2,'0'),2)}</div>
       </div>
