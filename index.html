@@ -979,7 +979,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
     <div class="mrow">
       <div class="mfg"><label>Serviço</label><select id="m-svc" onchange="updModal()"><option value="Transfusão">Transfusão</option><option value="Pediátrica">Pediátrica</option><option value="Medicações">Medicações</option><option value="Sangria">Sangria</option></select></div>
-      <div class="mfg"><label>Turno</label><select id="m-turn" onchange="updSerie()"><option value="Manhã">Manhã (07h–12h)</option><option value="Tarde">Tarde (12h–18h)</option></select></div>
+      <div class="mfg"><label>Turno</label><select id="m-turn" onchange="updSerie()"><option value="Manhã">Manhã</option><option value="Tarde">Tarde</option></select></div>
     </div>
     <div class="mrow">
       <div class="mfg" id="m-g-grp"><label>Gênero</label><select id="m-gender" onchange="updSerie()"><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select></div>
@@ -1415,8 +1415,7 @@ function effDate(p){return p.apptDate||hoje();} // registros antigos sem data co
 // Data, depois turno (Manhã antes da Tarde), depois ordem de agendamento (protocolo).
 function ordemAg(p){return effDate(p)+(p.turn==='Tarde'?'1':'0')+(p.time||'')+String(p.proto||'').padStart(12,'0');}
 function byDateTime(a,b){return ordemAg(a).localeCompare(ordemAg(b));}
-const TURNO_HORAS={Manhã:'07h–12h',Tarde:'12h–18h'};
-function turnoTxt(p){return p.turn?`${p.turn} (${TURNO_HORAS[p.turn]||''})`:'—';}
+function turnoTxt(p){return p.turn||'—';}
 function statusBadge(st){return({Confirmado:'<span class="bk">Confirmado</span>',Pendente:'<span class="bv">Pendente</span>',Compareceu:'<span class="bcomp">Compareceu</span>',Faltou:'<span class="bfalt">Faltou</span>'})[st]||'<span class="bc">Cancelado</span>';}
 function dmy(d){return d?d.split('-').reverse().join('/'):'—';}
 
@@ -3247,7 +3246,7 @@ function offerAgenda(id){
 function sendSMSById(id){
   const p=contactablePatient(id);
   if(!p)return;
-  const msg=encodeURIComponent(`Hemocentro JP: Ola ${p.name}, seu agendamento de ${p.service} em ${p.apptDate?dmy(p.apptDate):'data a confirmar'}, turno da ${p.turn==='Tarde'?'tarde (12h-18h)':'manha (07h-12h)'}. Qualquer duvida nos contate.`);
+  const msg=encodeURIComponent(`Hemocentro JP: Ola ${p.name}, seu agendamento de ${p.service} em ${p.apptDate?dmy(p.apptDate):'data a confirmar'}, turno da ${p.turn==='Tarde'?'tarde':'manha'}. Qualquer duvida nos contate.`);
   location.href=`sms:+55${normPhone(p.phone)}?body=${msg}`;
 }
 
