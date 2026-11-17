@@ -717,6 +717,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
                 <button onclick="goTodayDash()" style="background:#f1f5f9;border:none;border-radius:8px;padding:0 10px;height:28px;cursor:pointer;font-size:.68rem;font-weight:700;transition:background .15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Hoje</button>
                 <button onclick="navDate(1)" style="background:#f1f5f9;border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">›</button>
                 <span class="plink" onclick="printDayList()" title="Imprimir a lista deste dia">🖨️ Lista</span>
+                <span class="plink" onclick="baixarDiaPDF()" title="Baixar a lista deste dia em PDF">📄 PDF</span>
+                <span class="plink" onclick="baixarDiaExcel()" title="Baixar a lista deste dia em Excel">📊 Excel</span>
                 <span class="plink" onclick="showPage('patients')">Ver todos →</span>
               </div>
             </div>
@@ -1467,7 +1469,7 @@ function renderDashboard(){
 }
 
 function periodBlock(turn,maxKey,list,showExtra){
-  const cls=turn==='Manhã'?'ma':'ta',em=turn==='Manhã'?'🌅':'🌆',rng=turn==='Manhã'?'07H–12H':'12H–18H';
+  const cls=turn==='Manhã'?'ma':'ta',em=turn==='Manhã'?'🌅':'🌆';
   const max=getMax(maxKey),used=list.filter(isActive).length;
   let rows=list.sort(byDateTime).map((raw,idx)=>{
     const p=escObj(raw);
@@ -1482,7 +1484,7 @@ function periodBlock(turn,maxKey,list,showExtra){
   for(let i=0;i<Math.min(Math.max(0,max-used),2);i++)rows+=canEdit()&&!dayClosed(todayStr(viewDate))
     ?`<div class="ar vaga livre" onclick="agendarVaga('${maxKey}')" title="Agendar nesta vaga"><span class="at2">＋</span><div class="ai"><div class="an">Vaga disponível — agendar</div></div><span class="bk">Livre</span></div>`
     :`<div class="ar vaga"><span class="at2">—</span><div class="ai"><div class="an" style="font-style:italic;color:var(--light)">Vaga disponível</div></div><span class="bv">Aberta</span></div>`;
-  return`<div class="pblock"><div class="phdr2 ${cls}">${em} ${turn.toUpperCase()} · ${rng} · <strong>${used}/${max}</strong></div><div class="pbody">${rows}</div></div>`;
+  return`<div class="pblock"><div class="phdr2 ${cls}">${em} ${turn.toUpperCase()} · <strong>${used}/${max}</strong></div><div class="pbody">${rows}</div></div>`;
 }
 
 // Abas de serviço no topo do Início: tocar filtra; "+ Agendar" abre o formulário já com o serviço.
@@ -3309,6 +3311,65 @@ function printFicha(id){
 // ══════════════════════════════════════════════
 //  LISTA DO DIA (IMPRESSÃO)
 // ══════════════════════════════════════════════
+// ── Baixar a lista do dia em PDF e Excel ──
+const LIBS_DIA={
+  pdf:['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'],
+  xlsx:['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'],
+};
+const _libsCarregadas={};
+async function carregarLibs(tipo){
+  for(const src of LIBS_DIA[tipo]){
+    if(_libsCarregadas[src])continue;
+    await new Promise((ok,bad)=>{const sc=document.createElement('script');sc.src=src;sc.onload=ok;sc.onerror=()=>bad(new Error('sem internet'));document.head.appendChild(sc);});
+    _libsCarregadas[src]=true;
+  }
+}
+function linhasDoDia(){
+  const ds=todayStr(viewDate);
+  const list=patientsForDate(viewDate).filter(p=>p.status!=='Cancelado').sort(byDateTime);
+  const ordem=['Transfusão','Pediátrica','Medicações','Sangria'];
+  list.sort((a,b)=>(ordem.indexOf(a.service)-ordem.indexOf(b.service))||(a.turn===b.turn?0:a.turn==='Manhã'?-1:1)||byDateTime(a,b));
+  return{ds,linhas:list.map(p=>{const pc=pacById(p.pacienteId);
+    return{servico:p.service,turno:p.turn||'',genero:p.gender||'',nome:p.name,prot:p.proto||'',doc:pc?docLabel(pc):'',tipo:p.blood||'',
+      info:[p.extra,p.obs,p.encaixe&&'encaixe',p.serieId&&'série'].filter(Boolean).join(' · '),fone:p.phone||'',status:p.status};})};
+}
+const COLS_DIA=['Nº','Serviço','Turno','Gênero','Paciente','Protocolo','Documento','Tipo sang.','Medicação / Responsável / Obs.','Telefone','Status'];
+function linhaArr(l,i){return[i+1,l.servico,l.turno,l.genero,l.nome,l.prot,l.doc,l.tipo,l.info,l.fone,l.status];}
+async function baixarDiaPDF(){
+  const{ds,linhas}=linhasDoDia();
+  if(!linhas.length){showToast('⚠️ Nenhum agendamento neste dia','warn');return;}
+  showToast('⏳ Gerando PDF...','ok');
+  try{await carregarLibs('pdf');}catch(e){showToast('❌ Não foi possível gerar o PDF sem internet. Use 🖨️ Lista','err');return;}
+  const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  doc.setFontSize(14);doc.setTextColor(30,64,175);doc.text('Hemocentro de João Pessoa — Lista do dia',14,14);
+  doc.setFontSize(9);doc.setTextColor(100,116,139);
+  const d=new Date(),fechado=dayClosed(ds);
+  doc.text(`${dmy(ds)}, ${DIAS[new Date(ds+'T12:00').getDay()]} · ${linhas.length} agendamento(s) · Gerado em ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} por ${curUser?.name||''}`,14,20);
+  if(fechado){doc.setTextColor(153,27,27);doc.text(`Atenção: dia marcado sem atendimento (${fechado}).`,14,25);}
+  const body=[];let grupo='',n=0;
+  linhas.forEach(l=>{const g=`${l.servico} · ${l.turno}`;
+    if(g!==grupo){grupo=g;n=0;body.push([{content:g.toUpperCase()+` (${linhas.filter(x=>`${x.servico} · ${x.turno}`===g).length})`,colSpan:COLS_DIA.length,styles:{fillColor:[219,234,254],textColor:[30,64,175],fontStyle:'bold'}}]);}
+    body.push(linhaArr(l,n++));});
+  doc.autoTable({head:[COLS_DIA],body,startY:fechado?29:24,styles:{fontSize:7.5,cellPadding:1.6,overflow:'linebreak'},
+    headStyles:{fillColor:[30,64,175],textColor:255,fontSize:7},margin:{left:10,right:10},
+    didDrawPage:()=>{doc.setFontSize(7);doc.setTextColor(148,163,184);doc.text(`Página ${doc.getNumberOfPages()}`,doc.internal.pageSize.getWidth()-24,doc.internal.pageSize.getHeight()-6);}});
+  doc.save(`agendamentos_${ds}.pdf`);
+  showToast('📄 PDF baixado','ok');
+}
+async function baixarDiaExcel(){
+  const{ds,linhas}=linhasDoDia();
+  if(!linhas.length){showToast('⚠️ Nenhum agendamento neste dia','warn');return;}
+  try{await carregarLibs('xlsx');}catch(e){showToast('❌ Não foi possível gerar o Excel sem internet','err');return;}
+  const XLSX=window.XLSX;
+  const dados=[[`Hemocentro de João Pessoa — Lista do dia ${dmy(ds)} (${DIAS[new Date(ds+'T12:00').getDay()]})`],[],COLS_DIA,...linhas.map(linhaArr)];
+  const ws=XLSX.utils.aoa_to_sheet(dados);
+  ws['!cols']=[5,12,8,10,32,11,30,9,34,15,12].map(w=>({wch:w}));
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:COLS_DIA.length-1}}];
+  ws['!autofilter']={ref:`A3:K${dados.length}`};
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,dmy(ds).replace(/\//g,'-'));
+  XLSX.writeFile(wb,`agendamentos_${ds}.xlsx`);
+  showToast('📊 Excel baixado','ok');
+}
 function printDayList(){
   const ds=todayStr(viewDate);
   const list=patientsForDate(viewDate).filter(p=>p.status!=='Cancelado').sort(byDateTime);
