@@ -3,3 +3,4 @@ hemocentro_backup_*.json
 hemocentro_agendamentos_*.csv
 PRIMEIRO_ACESSO.txt
 supabase/002_gestor_inicial.sql
+exemplos/
