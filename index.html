@@ -839,7 +839,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         </div>
         <div class="mgmt-col">
           <div class="cap-card"><div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#d1fae5,#ecfdf5)">💊</div><div><h3>Medicações</h3><p>Vagas por turno</p></div></div><div class="cap-rows" id="cap-M"></div></div>
-          <div class="cap-card"><div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#ede9fe,#f5f3ff)">🩸</div><div><h3>Sangria Terapêutica</h3><p>Vagas por turno e gênero</p></div></div><div class="cap-rows" id="cap-S"></div></div>
+          <div class="cap-card"><div class="cap-card-hdr"><div class="cap-card-ico" style="background:linear-gradient(135deg,#ede9fe,#f5f3ff)">🩸</div><div><h3>Sangria Terapêutica</h3><p>Vagas por turno (homens e mulheres juntos)</p></div></div><div class="cap-rows" id="cap-S"></div></div>
         </div>
       </div>
       <div class="cap-card">
@@ -1114,7 +1114,7 @@ const SB_URL='https://ohuaoncwgioawgptyqgz.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9odWFvbmN3Z2lvYXdncHR5cWd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NzQ1MjAsImV4cCI6MjEwMTU1MDUyMH0.ckf7P-qPqGyoLZgW2MUrhQBBC_Ei9MW2t1nohi1SXDM';
 const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY):null;
 const toEmail=u=>`${u}@ag.hemocentro.invalid`;
-const DEF_CAPS={T:{fmanha:3,ftarde:3,mmanha:3,mtarde:3},P:{manha:2,tarde:2},M:{manha:5,tarde:5},S:{fmanha:5,ftarde:5,mmanha:5,mtarde:5}};
+const DEF_CAPS={T:{fmanha:3,ftarde:3,mmanha:3,mtarde:3},P:{manha:2,tarde:2},M:{manha:5,tarde:5},S:{manha:10,tarde:10}};
 function normalizeCaps(c){
   const out={};
   for(const s in DEF_CAPS){out[s]={};for(const k in DEF_CAPS[s]){const n=c?.[s]?.[k];out[s][k]=Number.isFinite(n)&&n>=0?n:DEF_CAPS[s][k];}}
@@ -1406,7 +1406,7 @@ function getKey(p){
   if(p.service==='Transfusão')return`T.${g}${t}`;
   if(p.service==='Pediátrica')return`P.${t}`;
   if(p.service==='Medicações')return`M.${t}`;
-  if(p.service==='Sangria')return`S.${g}${t}`;
+  if(p.service==='Sangria')return`S.${t}`;
   return'';
 }
 function getMax(k){const[s,v]=k.split('.');return caps[s]?.[v]??0;}
@@ -1492,7 +1492,7 @@ const SVC_TABS=[
   {svc:'Transfusão',cls:'ct',ico:'💉',keys:['T.fmanha','T.ftarde','T.mmanha','T.mtarde']},
   {svc:'Pediátrica',cls:'cp',ico:'👶',keys:['P.manha','P.tarde']},
   {svc:'Medicações',cls:'cm',ico:'💊',keys:['M.manha','M.tarde']},
-  {svc:'Sangria',cls:'cs',ico:'🩸',keys:['S.fmanha','S.ftarde','S.mmanha','S.mtarde']},
+  {svc:'Sangria',cls:'cs',ico:'🩸',keys:['S.manha','S.tarde']},
 ];
 function renderSvcTabs(){
   const el=G('svc-tabs');if(!el)return;
@@ -1525,7 +1525,7 @@ function agendarServico(svc,turn,gender){
 function agendarVaga(key){
   const[cod,sub]=key.split('.');
   const svc={T:'Transfusão',P:'Pediátrica',M:'Medicações',S:'Sangria'}[cod];
-  const gender=(cod==='T'||cod==='S')?(sub.startsWith('f')?'Feminino':'Masculino'):null;
+  const gender=cod==='T'?(sub.startsWith('f')?'Feminino':'Masculino'):null;
   agendarServico(svc,sub.endsWith('manha')?'Manhã':'Tarde',gender);
 }
 function filterDash(svc,gender=null,turn=null){
@@ -1543,7 +1543,7 @@ function renderApptList(){
     {label:'1. Transfusão',color:'var(--T)',type:'gender',svc:'Transfusão'},
     {label:'2. Transfusão Pediátrica',color:'var(--P)',type:'flat',svc:'Pediátrica',extra:true},
     {label:'3. Aplicação de Medicações',color:'var(--M)',type:'flat',svc:'Medicações',extra:true},
-    {label:'4. Sangria Terapêutica',color:'var(--S)',type:'gender',svc:'Sangria'},
+    {label:'4. Sangria Terapêutica',color:'var(--S)',type:'flat',svc:'Sangria'},
   ].filter(s=>!f||s.svc===f.svc);
   const turns=f?.turn?[f.turn]:['Manhã','Tarde'];
   const genders=f?.gender?[f.gender]:['Feminino','Masculino'];
@@ -1558,7 +1558,7 @@ function renderApptList(){
     if(s.type==='flat'){
       turns.forEach(t=>{
         const list=dayPats.filter(p=>p.service===s.svc&&p.turn===t);
-        const k=(s.svc==='Pediátrica'?'P':'M')+'.'+(t==='Manhã'?'manha':'tarde');
+        const k=({Pediátrica:'P',Medicações:'M',Sangria:'S'})[s.svc]+'.'+(t==='Manhã'?'manha':'tarde');
         html+=periodBlock(t,k,list,!!s.extra);
       });
     } else {
@@ -1566,7 +1566,7 @@ function renderApptList(){
         html+=`<div class="ghdr2 ${g==='Feminino'?'f':'m'}" style="margin:8px 0 6px">${g.toUpperCase()}</div>`;
         turns.forEach(t=>{
           const list=dayPats.filter(p=>p.service===s.svc&&p.gender===g&&p.turn===t);
-          const sk=s.svc==='Transfusão'?'T':'S',gk=g==='Feminino'?'f':'m',tk=t==='Manhã'?'manha':'tarde';
+          const sk='T',gk=g==='Feminino'?'f':'m',tk=t==='Manhã'?'manha':'tarde';
           html+=periodBlock(t,`${sk}.${gk}${tk}`,list,false);
         });
       });
@@ -1580,7 +1580,7 @@ function renderSummary(){
     {l:'Transfusão',e:'💉',c:'var(--T)',keys:['T.fmanha','T.ftarde','T.mmanha','T.mtarde']},
     {l:'Pediátrica',e:'👶',c:'var(--P)',keys:['P.manha','P.tarde']},
     {l:'Medicações',e:'💊',c:'var(--M)',keys:['M.manha','M.tarde']},
-    {l:'Sangria',   e:'🩸',c:'var(--S)',keys:['S.fmanha','S.ftarde','S.mmanha','S.mtarde']},
+    {l:'Sangria',   e:'🩸',c:'var(--S)',keys:['S.manha','S.tarde']},
   ];
   let html='',tu=0,tm=0;
   const dayP=patientsForDate(viewDate);
@@ -1602,8 +1602,8 @@ function renderCapBars(){
     {l:'Pediátrica Tarde', used:getUsed('P.tarde'),max:caps.P.tarde,c:'var(--P)'},
     {l:'Medicações Manhã', used:getUsed('M.manha'),max:caps.M.manha,c:'var(--M)'},
     {l:'Medicações Tarde', used:getUsed('M.tarde'),max:caps.M.tarde,c:'var(--M)'},
-    {l:'Sangria Manhã',    used:getUsed('S.fmanha')+getUsed('S.mmanha'),max:caps.S.fmanha+caps.S.mmanha,c:'var(--S)'},
-    {l:'Sangria Tarde',    used:getUsed('S.ftarde')+getUsed('S.mtarde'),max:caps.S.ftarde+caps.S.mtarde,c:'var(--S)'},
+    {l:'Sangria Manhã',    used:getUsed('S.manha'),max:caps.S.manha,c:'var(--S)'},
+    {l:'Sangria Tarde',    used:getUsed('S.tarde'),max:caps.S.tarde,c:'var(--S)'},
   ];
   document.getElementById('cap-bars').innerHTML=items.map(r=>{
     const pct=r.max?Math.round(r.used/r.max*100):0;
@@ -1700,7 +1700,7 @@ function renderRelatorio(){
     {l:'Transfusão',keys:['T.fmanha','T.ftarde','T.mmanha','T.mtarde'],c:'#2563eb'},
     {l:'Pediátrica',keys:['P.manha','P.tarde'],c:'#d97706'},
     {l:'Medicações',keys:['M.manha','M.tarde'],c:'#059669'},
-    {l:'Sangria',   keys:['S.fmanha','S.ftarde','S.mmanha','S.mtarde'],c:'#7c3aed'},
+    {l:'Sangria',   keys:['S.manha','S.tarde'],c:'#7c3aed'},
   ];
   const usedOf=k=>list.filter(p=>getKey(p)===k&&isActive(p)).length;
   // A capacidade cadastrada é por dia; no período multiplica pelos dias de atendimento.
@@ -1848,7 +1848,7 @@ function renderMgmt(){
   mkCC('cap-T',[{l:'Feminino Manhã',k:'fmanha'},{l:'Feminino Tarde',k:'ftarde'},{l:'Masculino Manhã',k:'mmanha'},{l:'Masculino Tarde',k:'mtarde'}],'T');
   mkCC('cap-P',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'P');
   mkCC('cap-M',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'M');
-  mkCC('cap-S',[{l:'Feminino Manhã',k:'fmanha'},{l:'Feminino Tarde',k:'ftarde'},{l:'Masculino Manhã',k:'mmanha'},{l:'Masculino Tarde',k:'mtarde'}],'S');
+  mkCC('cap-S',[{l:'Manhã',k:'manha'},{l:'Tarde',k:'tarde'}],'S');
 }
 function mkCC(cid,rows,svc){
   document.getElementById(cid).innerHTML=rows.map(r=>{
@@ -2528,7 +2528,7 @@ function printBPA(){
 
 // ══ Calendário: semana e mês ══
 let calTab='semana', calRef=new Date(), calSvc='';
-const SVC_KEYS={'Transfusão':{M:['T.fmanha','T.mmanha'],T:['T.ftarde','T.mtarde'],ico:'💉'},'Pediátrica':{M:['P.manha'],T:['P.tarde'],ico:'👶'},'Medicações':{M:['M.manha'],T:['M.tarde'],ico:'💊'},'Sangria':{M:['S.fmanha','S.mmanha'],T:['S.ftarde','S.mtarde'],ico:'🩸'}};
+const SVC_KEYS={'Transfusão':{M:['T.fmanha','T.mmanha'],T:['T.ftarde','T.mtarde'],ico:'💉'},'Pediátrica':{M:['P.manha'],T:['P.tarde'],ico:'👶'},'Medicações':{M:['M.manha'],T:['M.tarde'],ico:'💊'},'Sangria':{M:['S.manha'],T:['S.tarde'],ico:'🩸'}};
 // Ocupação de um dia: serviço (ou todos) e turno (ou ambos).
 function ocupacao(ds,svc,turno){
   const svcs=svc?[svc]:Object.keys(SVC_KEYS);
@@ -3375,7 +3375,7 @@ function printDayList(){
   const list=patientsForDate(viewDate).filter(p=>p.status!=='Cancelado').sort(byDateTime);
   if(!list.length){showToast('⚠️ Nenhum agendamento neste dia','warn');return;}
   const fechado=dayClosed(ds);
-  const grupos=[['Transfusão',true],['Pediátrica',false],['Medicações',false],['Sangria',true]];
+  const grupos=[['Transfusão',true],['Pediátrica',false],['Medicações',false],['Sangria',false]];
   let body='',n=0;
   for(const[svc,porGen] of grupos)for(const t of['Manhã','Tarde'])for(const g of(porGen?['Feminino','Masculino']:[''])){
     const l=list.filter(p=>p.service===svc&&p.turn===t&&(!porGen||(g==='Feminino')===(p.gender==='Feminino')));
@@ -3430,8 +3430,7 @@ function buildNotifications(){
     {k:'T.mmanha',l:'Transfusão Masc. Manhã'},{k:'T.mtarde',l:'Transfusão Masc. Tarde'},
     {k:'P.manha',l:'Pediátrica Manhã'},{k:'P.tarde',l:'Pediátrica Tarde'},
     {k:'M.manha',l:'Medicações Manhã'},{k:'M.tarde',l:'Medicações Tarde'},
-    {k:'S.fmanha',l:'Sangria Fem. Manhã'},{k:'S.ftarde',l:'Sangria Fem. Tarde'},
-    {k:'S.mmanha',l:'Sangria Masc. Manhã'},{k:'S.mtarde',l:'Sangria Masc. Tarde'},
+    {k:'S.manha',l:'Sangria Manhã'},{k:'S.tarde',l:'Sangria Tarde'},
   ];
   keys.forEach(({k,l})=>{
     const used=getUsed(k,today), max=getMax(k);

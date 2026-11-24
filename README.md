@@ -17,6 +17,7 @@ Agendamento de transfusão, transfusão pediátrica, medicações e sangria tera
 - `supabase/009_lembretes_e_espera.sql` — registro de lembretes enviados e lista de espera
 - `supabase/010_dados_bpa.sql` — nascimento, raça/cor e endereço do paciente para o BPA-I
 - `supabase/011_profissionais_bpa.sql` — lista de profissionais que assinam o BPA-I
+- `supabase/012_sangria_sem_genero.sql` — Sangria com vagas só por turno (homens e mulheres juntos), tarde com 10
 
 Não precisa de compilação. Qualquer hospedagem estática com HTTPS serve (GitHub Pages, Netlify).
 
