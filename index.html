@@ -2365,7 +2365,7 @@ function bpaLista(){
 function bpaFaltas(pc){
   if(!pc)return['cadastro'];
   const f=[];
-  if(!pc.cns)f.push('CNS');if(!pc.dob)f.push('nascimento');if(!pc.raca)f.push('raça/cor');
+  if(!pc.cpf)f.push('CPF');if(!pc.dob)f.push('nascimento');if(!pc.raca)f.push('raça/cor');
   if(!pc.end)f.push('endereço');if(!pc.cep)f.push('CEP');if(!pc.codMun)f.push('cód. município');
   return f;
 }
@@ -2414,7 +2414,7 @@ function printBPA(){
       <div class="seqh"><span class="tab">SEQUÊNCIA ${n}</span><span class="bar2">IDENTIFICAÇÃO DO PACIENTE</span></div>
       <div class="fld"><div class="lb">NOME DO PACIENTE</div><div class="ln">${esc(a?.name||'')}</div></div>
       <div class="row">
-        <div class="fld"><div class="lb">CARTÃO NACIONAL DE SAÚDE (CNS)</div>${boxes(pc?.cns||'',15)}</div>
+        <div class="fld"><div class="lb">CPF DO PACIENTE</div>${boxes(pc?.cpf||'',11)}</div>
         <div class="fld"><div class="lb">DATA DE NASCIMENTO</div>${boxes(ddmmaaaa(pc?.dob),8)}</div>
         <div class="fld"><div class="lb">IDADE</div>${boxes(a?bpaIdade(pc?.dob,a.apptDate):'',3)}</div>
       </div>
